@@ -127,7 +127,14 @@ def get_authors_data() -> List[Dict[str, Any]]:
 
 @lru_cache(maxsize=1)
 def get_statistics() -> Dict[str, int]:
-	"""Get application statistics counts with caching."""
+	"""
+	Get application statistics counts with caching.
+	
+	Returns:
+		Dict[str, int]: Statistics including total_books, total_authors, 
+		total_categories, total_languages, total_users, total_collections,
+		books_with_covers, and missing_covers
+	"""
 	stats: Dict[str, int] = {}
 	with get_db() as conn:
 		with conn.cursor() as cursor:
@@ -137,6 +144,7 @@ def get_statistics() -> Dict[str, int]:
 					(SELECT COUNT(*) FROM books) as total_books,
 					(SELECT COUNT(*) FROM authors) as total_authors,
 					(SELECT COUNT(*) FROM categories) as total_categories,
+					(SELECT COUNT(*) FROM languages) as total_languages,
 					(SELECT COUNT(*) FROM users) as total_users,
 					(SELECT COUNT(*) FROM collections) as total_collections,
 					(SELECT COUNT(*) FROM books WHERE cover_id IS NOT NULL) as books_with_covers,
