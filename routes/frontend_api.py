@@ -47,6 +47,23 @@ def update_author_image_url(author_id):
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
+@frontend_api.route('/authors/image-by-name', methods=['GET'])
+def get_author_image_by_name():
+    """Get Open Library author image URL by author name."""
+    try:
+        name = (request.args.get('name') or '').strip()
+        if not name:
+            return jsonify({'error': 'name is required'}), 400
+
+        ol_author = OpenLibraryService.search_author_by_name(name)
+        if ol_author and ol_author.get('open_library_key'):
+            url = OpenLibraryService.get_author_image_url(ol_author['open_library_key'], 'M')
+            return jsonify({'image_url': url})
+        return jsonify({'image_url': None})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 @frontend_api.route('/books/by-author', methods=['GET'])
 def get_books_by_author():
     """Get books by a specific author"""

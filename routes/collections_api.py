@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify, request
 from database import get_db
 from util import normalize_strings
+from routes.auth import can_edit_collection, is_admin
 
 collections_api = Blueprint('collections_api', __name__, url_prefix='/api/collections')
 
@@ -108,18 +109,79 @@ def get_books_in_collection(collection_id):
         with get_db() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("""
-                    SELECT b.id, b.title,
+                    SELECT b.id, b.title, b.publication_year, b.cover_id,
                            ARRAY_AGG(DISTINCT a.name) FILTER (WHERE a.name IS NOT NULL) as authors
                     FROM books b
                     JOIN collection_books cb ON b.id = cb.book_id
                     LEFT JOIN book_authors ba ON b.id = ba.book_id
                     LEFT JOIN authors a ON ba.author_id = a.id
                     WHERE cb.collection_id = %s
-                    GROUP BY b.id, b.title
+                    GROUP BY b.id, b.title, b.publication_year, b.cover_id
                     ORDER BY b.title
                 """, (collection_id,))
                 books = cursor.fetchall()
                 return jsonify(books)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@collections_api.route('/<int:collection_id>/books/available', methods=['GET'])
+def get_available_books_for_collection(collection_id: int):
+    """Return books not in this collection, optionally filtered and paginated."""
+    try:
+        search = (request.args.get('search') or '').strip()
+        offset = request.args.get('offset', default=0, type=int)
+        limit = request.args.get('limit', default=20, type=int)
+
+        with get_db() as conn:
+            with conn.cursor() as cursor:
+                # Ensure collection exists
+                cursor.execute("SELECT user_id FROM collections WHERE id = %s", (collection_id,))
+                collection = cursor.fetchone()
+                if not collection:
+                    return jsonify({"error": "Collection not found"}), 404
+
+                # Base query for books not in collection
+                params = [collection_id]
+                where_extra = ""
+                if search:
+                    params.extend([f"%{search}%", f"%{search}%"]) 
+                    where_extra = (
+                        " AND (LOWER(b.title) LIKE LOWER(%s) OR EXISTS ("
+                        " SELECT 1 FROM book_authors ba2 JOIN authors a2 ON ba2.author_id = a2.id"
+                        " WHERE ba2.book_id = b.id AND LOWER(a2.name) LIKE LOWER(%s)))"
+                    )
+
+                query = (
+                    "SELECT b.id, b.title, b.publication_year, b.cover_id,"
+                    "       COALESCE(ARRAY_AGG(DISTINCT a.name) FILTER (WHERE a.name IS NOT NULL), ARRAY[]::text[]) as authors "
+                    "FROM books b "
+                    "LEFT JOIN book_authors ba ON b.id = ba.book_id "
+                    "LEFT JOIN authors a ON ba.author_id = a.id "
+                    "WHERE b.id NOT IN (SELECT book_id FROM collection_books WHERE collection_id = %s)"
+                    + where_extra +
+                    " GROUP BY b.id, b.title, b.publication_year, b.cover_id "
+                    " ORDER BY b.title OFFSET %s LIMIT %s"
+                )
+                params.extend([offset, limit])
+
+                cursor.execute(query, params)
+                items = cursor.fetchall()
+
+                # Determine if more items exist
+                has_more = False
+                if len(items) == limit:
+                    cursor.execute(
+                        query.replace("OFFSET %s LIMIT %s", "OFFSET %s LIMIT %s"),
+                        params[:-2] + [offset + limit, 1],
+                    )
+                    more = cursor.fetchall()
+                    has_more = len(more) > 0
+
+                return jsonify({
+                    "items": items,
+                    "pagination": {"offset": offset, "limit": limit, "has_more": has_more}
+                })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -135,6 +197,13 @@ def add_books_to_collection(collection_id):
         
         with get_db() as conn:
             with conn.cursor() as cursor:
+                # Permission: owner or admin
+                cursor.execute("SELECT user_id FROM collections WHERE id = %s", (collection_id,))
+                collection = cursor.fetchone()
+                if not collection:
+                    return jsonify({"error": "Collection not found"}), 404
+                if not (can_edit_collection(collection['user_id']) or is_admin()):
+                    return jsonify({"error": "Permission denied"}), 403
                 # Check if collection exists
                 cursor.execute("SELECT id FROM collections WHERE id = %s", (collection_id,))
                 if not cursor.fetchone():
@@ -150,6 +219,41 @@ def add_books_to_collection(collection_id):
                 
                 return jsonify({"success": True, "message": f"Added {len(book_ids)} books to collection"})
         
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@collections_api.route('/<int:collection_id>/books', methods=['POST'])
+def add_single_book_to_collection(collection_id: int):
+    """Add a single book to a collection: body {"book_id": number}."""
+    try:
+        data = request.get_json() or {}
+        book_id = data.get('book_id')
+        if not book_id:
+            return jsonify({"error": "book_id is required"}), 400
+
+        with get_db() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT user_id FROM collections WHERE id = %s", (collection_id,))
+                collection = cursor.fetchone()
+                if not collection:
+                    return jsonify({"error": "Collection not found"}), 404
+                if not (can_edit_collection(collection['user_id']) or is_admin()):
+                    return jsonify({"error": "Permission denied"}), 403
+
+                cursor.execute("SELECT id FROM books WHERE id = %s", (book_id,))
+                if not cursor.fetchone():
+                    return jsonify({"error": "Book not found"}), 404
+
+                cursor.execute(
+                    """
+                    INSERT INTO collection_books (collection_id, book_id)
+                    VALUES (%s, %s)
+                    ON CONFLICT (collection_id, book_id) DO NOTHING
+                    """,
+                    (collection_id, book_id),
+                )
+                return jsonify({"success": True, "message": "Book added to collection"}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 

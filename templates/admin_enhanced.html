@@ -2,87 +2,341 @@
 
 {% block title %}Admin Dashboard - Books Manager{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Modern Admin Design System */
+    :root {
+        --admin-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --admin-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --admin-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --admin-warning: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        --admin-danger: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --admin-info: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        --card-shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+        --border-radius: 16px;
+        --border-radius-sm: 12px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Admin Header */
+    .admin-header {
+        background: var(--admin-primary);
+        border-radius: var(--border-radius);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="admin-grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23admin-grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .admin-header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Stats Cards */
+    .stats-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--admin-primary);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--card-shadow-hover);
+    }
+    
+    .stats-card.primary::before { background: var(--admin-primary); }
+    .stats-card.success::before { background: var(--admin-success); }
+    .stats-card.warning::before { background: var(--admin-warning); }
+    .stats-card.danger::before { background: var(--admin-danger); }
+    .stats-card.info::before { background: var(--admin-info); }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-icon.primary { background: var(--admin-primary); }
+    .stats-icon.success { background: var(--admin-success); }
+    .stats-icon.warning { background: var(--admin-warning); }
+    .stats-icon.danger { background: var(--admin-danger); }
+    .stats-icon.info { background: var(--admin-info); }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+        color: #718096;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.875rem;
+    }
+
+    /* Data Tables */
+    .data-table {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+    
+    .data-table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .data-table-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    .data-table-subtitle {
+        color: #718096;
+        font-size: 0.875rem;
+        margin: 0.25rem 0 0 0;
+    }
+    
+    .table {
+        margin: 0;
+    }
+    
+    .table th {
+        background: #f8f9fa;
+        border: none;
+        font-weight: 600;
+        color: #4a5568;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .table td {
+        border: none;
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    /* Action Buttons */
+    .btn-admin {
+        border-radius: var(--border-radius-sm);
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        border: none;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-admin::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .btn-admin:hover::before {
+        left: 100%;
+    }
+    
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-admin-primary {
+        background: var(--admin-primary);
+        color: white;
+    }
+    
+    .btn-admin-success {
+        background: var(--admin-success);
+        color: white;
+    }
+    
+    .btn-admin-warning {
+        background: var(--admin-warning);
+        color: white;
+    }
+    
+    .btn-admin-danger {
+        background: var(--admin-danger);
+        color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .admin-header {
+            padding: 1.5rem;
+        }
+        
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="container-fluid mt-4">
-    <div class="row">
-        <div class="col-12">
-            <h1 class="display-4 text-center mb-4">
-                <i class="icon icon-cog"></i> Admin Dashboard
-            </h1>
+    <!-- Admin Header -->
+    <div class="admin-header">
+        <div class="admin-header-content">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 mb-2 fw-bold">
+                        <i class="fas fa-crown me-3"></i>Admin Dashboard
+                    </h1>
+                    <p class="mb-0 fs-5 opacity-90">
+                        <i class="fas fa-chart-line me-2"></i>Manage your books library with powerful admin tools
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex flex-column align-items-end">
+                        <span class="badge bg-light text-dark fs-6 mb-2">
+                            <i class="fas fa-user-shield me-2"></i>Administrator
+                        </span>
+                        <small class="opacity-75">Full system access</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-md-2 mb-3">
-            <div class="card text-white bg-primary h-100">
-                <div class="card-body text-center">
-                    <i class="icon icon-book" style="font-size: 2rem;"></i>
-                    <h5 class="card-title mt-2">Books</h5>
-                    <h3 class="card-text">{{ stats.total_books or 0 }}</h3>
+    <div class="row mb-5">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card primary">
+                <div class="stats-icon primary">
+                    <i class="fas fa-book"></i>
                 </div>
+                <div class="stats-number">{{ stats.total_books or 0 }}</div>
+                <div class="stats-label">Books</div>
             </div>
         </div>
-        <div class="col-md-2 mb-3">
-            <div class="card text-white bg-success h-100">
-                <div class="card-body text-center">
-                    <i class="icon icon-user" style="font-size: 2rem;"></i>
-                    <h5 class="card-title mt-2">Authors</h5>
-                    <h3 class="card-text">{{ stats.total_authors or 0 }}</h3>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card success">
+                <div class="stats-icon success">
+                    <i class="fas fa-user-edit"></i>
                 </div>
+                <div class="stats-number">{{ stats.total_authors or 0 }}</div>
+                <div class="stats-label">Authors</div>
             </div>
         </div>
-        <div class="col-md-2 mb-3">
-            <div class="card text-white bg-info h-100">
-                <div class="card-body text-center">
-                    <i class="icon icon-tag" style="font-size: 2rem;"></i>
-                    <h5 class="card-title mt-2">Categories</h5>
-                    <h3 class="card-text">{{ stats.total_categories or 0 }}</h3>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card info">
+                <div class="stats-icon info">
+                    <i class="fas fa-tags"></i>
                 </div>
+                <div class="stats-number">{{ stats.total_categories or 0 }}</div>
+                <div class="stats-label">Categories</div>
             </div>
         </div>
-        <div class="col-md-2 mb-3">
-            <div class="card text-white bg-warning h-100">
-                <div class="card-body text-center">
-                    <i class="icon icon-globe" style="font-size: 2rem;"></i>
-                    <h5 class="card-title mt-2">Languages</h5>
-                    <h3 class="card-text">{{ stats.total_languages or 0 }}</h3>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card warning">
+                <div class="stats-icon warning">
+                    <i class="fas fa-globe"></i>
                 </div>
+                <div class="stats-number">{{ stats.total_languages or 0 }}</div>
+                <div class="stats-label">Languages</div>
             </div>
         </div>
-        <div class="col-md-2 mb-3">
-            <div class="card text-white bg-secondary h-100">
-                <div class="card-body text-center">
-                    <h5 class="card-title mt-2">Users</h5>
-                    <h3 class="card-text">{{ stats.total_users or 0 }}</h3>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card danger">
+                <div class="stats-icon danger">
+                    <i class="fas fa-users"></i>
                 </div>
+                <div class="stats-number">{{ stats.total_users or 0 }}</div>
+                <div class="stats-label">Users</div>
             </div>
         </div>
-        <div class="col-md-2 mb-3">
-            <div class="card text-white bg-danger h-100">
-                <div class="card-body text-center">
-                    <i class="fas fa-layer-group" style="font-size: 2rem;"></i>
-                    <h5 class="card-title mt-2">Collections</h5>
-                    <h3 class="card-text">{{ stats.total_collections or 0 }}</h3>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card primary">
+                <div class="stats-icon primary">
+                    <i class="fas fa-layer-group"></i>
                 </div>
+                <div class="stats-number">{{ stats.total_collections or 0 }}</div>
+                <div class="stats-label">Collections</div>
             </div>
         </div>
-        <div class="col-md-2 mb-3">
-            <div class="card text-white bg-dark h-100">
-                <div class="card-body text-center">
-                    <i class="icon icon-image" style="font-size: 2rem;"></i>
-                    <h5 class="card-title mt-2">Covers</h5>
-                    <h3 class="card-text">{{ stats.books_with_covers or 0 }}</h3>
-                    <small>{{ "%.0f"|format(stats.cover_percentage or 0) }}%</small>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card info">
+                <div class="stats-icon info">
+                    <i class="fas fa-image"></i>
                 </div>
+                <div class="stats-number">{{ stats.books_with_covers or 0 }}</div>
+                <div class="stats-label">Books with Covers</div>
+                <small class="text-muted">{{ "%.0f"|format(stats.cover_percentage or 0) }}% coverage</small>
             </div>
         </div>
     </div>
 
     <!-- Management Tabs -->
-    <div class="card">
-        <div class="card-header">
-            <ul class="nav nav-pills card-header-pills" id="adminTabs" role="tablist">
+    <div class="data-table">
+        <div class="data-table-header">
+            <h3 class="data-table-title">
+                <i class="fas fa-cogs me-2"></i>Management Tools
+            </h3>
+            <p class="data-table-subtitle">Manage your library data and settings</p>
+        </div>
+        <div class="p-4">
+            <ul class="nav nav-pills nav-fill mb-4" id="adminTabs" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="books-tab" data-bs-toggle="pill" data-bs-target="#books" type="button" role="tab">
                         <i class="fas fa-book"></i> Books
@@ -2581,17 +2835,19 @@ function sortBooksTable() {
     const tbody = document.querySelector('#books tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
     
+    console.log(`Sorting books by ${sortBy} in ${order} order, found ${rows.length} rows`);
+    
     rows.sort((a, b) => {
         let aValue, bValue;
         
         switch(sortBy) {
             case 'title':
-                aValue = a.cells[0].textContent.trim();
-                bValue = b.cells[0].textContent.trim();
+                aValue = a.cells[1].textContent.trim();
+                bValue = b.cells[1].textContent.trim();
                 break;
             case 'publication_year':
-                aValue = parseInt(a.cells[2].textContent.trim()) || 0;
-                bValue = parseInt(b.cells[2].textContent.trim()) || 0;
+                aValue = parseInt(a.cells[3].textContent.trim()) || 0;
+                bValue = parseInt(b.cells[3].textContent.trim()) || 0;
                 break;
             case 'id':
                 aValue = parseInt(a.dataset.id) || 0;
@@ -2606,10 +2862,15 @@ function sortBooksTable() {
             bValue = bValue.toLowerCase();
         }
         
+        // Handle null/undefined values
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return order === 'desc' ? 1 : -1;
+        if (bValue == null) return order === 'desc' ? -1 : 1;
+        
         if (order === 'desc') {
-            return aValue < bValue ? 1 : -1;
+            return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
         } else {
-            return aValue > bValue ? 1 : -1;
+            return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
         }
     });
     
@@ -2647,17 +2908,19 @@ function sortAuthorsTable() {
     const tbody = document.querySelector('#authors tbody');
     const rows = Array.from(tbody.querySelectorAll('tr'));
     
+    console.log(`Sorting authors by ${sortBy} in ${order} order, found ${rows.length} rows`);
+    
     rows.sort((a, b) => {
         let aValue, bValue;
         
         switch(sortBy) {
             case 'name':
-                aValue = a.cells[0].textContent.trim();
-                bValue = b.cells[0].textContent.trim();
+                aValue = a.cells[1].textContent.trim();
+                bValue = b.cells[1].textContent.trim();
                 break;
             case 'book_count':
-                aValue = parseInt(a.cells[1].textContent.trim()) || 0;
-                bValue = parseInt(b.cells[1].textContent.trim()) || 0;
+                aValue = parseInt(a.cells[2].textContent.trim()) || 0;
+                bValue = parseInt(b.cells[2].textContent.trim()) || 0;
                 break;
             case 'id':
                 aValue = parseInt(a.dataset.id) || 0;
@@ -2672,10 +2935,15 @@ function sortAuthorsTable() {
             bValue = bValue.toLowerCase();
         }
         
+        // Handle null/undefined values
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return order === 'desc' ? 1 : -1;
+        if (bValue == null) return order === 'desc' ? -1 : 1;
+        
         if (order === 'desc') {
-            return aValue < bValue ? 1 : -1;
+            return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
         } else {
-            return aValue > bValue ? 1 : -1;
+            return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
         }
     });
     
@@ -2700,30 +2968,13 @@ function paginateBooks() {
     
     // Get all rows that should be visible based on current filters
     const filteredRows = Array.from(tableRows).filter(row => {
-        // Check if row matches current search/filter criteria
+        // Check if row matches current search criteria
         const searchTerm = document.getElementById('booksSearch')?.value?.toLowerCase() || '';
-        const categoryFilter = document.getElementById('booksCategoryFilter')?.value || '';
-        const languageFilter = document.getElementById('booksLanguageFilter')?.value || '';
-        const sortBy = document.getElementById('booksSortBy')?.value || '';
         
         if (searchTerm) {
             const cells = row.querySelectorAll('td');
             const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
             if (!rowText.includes(searchTerm)) return false;
-        }
-        
-        if (categoryFilter) {
-            const categoryCell = row.querySelector('td:nth-child(4)'); // Categories column
-            if (categoryCell && !categoryCell.textContent.toLowerCase().includes(categoryFilter.toLowerCase())) {
-                return false;
-            }
-        }
-        
-        if (languageFilter) {
-            const languageCell = row.querySelector('td:nth-child(5)'); // Languages column
-            if (languageCell && !languageCell.textContent.toLowerCase().includes(languageFilter.toLowerCase())) {
-                return false;
-            }
         }
         
         return true;
@@ -2950,7 +3201,6 @@ function updateBooksCount() {
         return true;
     }).length;
     
-    console.log(`Showing ${visibleRows.length} of ${filteredCount} filtered books (${tableRows.length} total)`);
 }
 
 function updateAuthorsCount() {
@@ -2970,7 +3220,6 @@ function updateAuthorsCount() {
         return true;
     }).length;
     
-    console.log(`Showing ${visibleRows.length} of ${filteredCount} filtered authors (${tableRows.length} total)`);
 }
 
 // Initialize pagination when page loads

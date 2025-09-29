@@ -27,22 +27,24 @@ def get_categories():
                     search_params = [f"%{search}%"]
                 
                 # Get total count
-                count_query = f"SELECT COUNT(*) FROM categories {where_clause}"
+                count_query = "SELECT COUNT(*) FROM categories " + where_clause
                 cursor.execute(count_query, search_params)
                 total_count = cursor.fetchone()['count']
                 
                 # Get categories with pagination and book count
-                categories_query = f"""
+                categories_base_query = """
                     SELECT 
                         categories.id, 
                         categories.name,
-                        categories.description,
-                        COUNT(books.id) as book_count
+                        COALESCE(book_counts.book_count, 0) as book_count
                     FROM categories
-                    LEFT JOIN book_categories ON categories.id = book_categories.category_id
-                    LEFT JOIN books ON book_categories.book_id = books.id
-                    {where_clause}
-                    GROUP BY categories.id, categories.name, categories.description
+                    LEFT JOIN (
+                        SELECT category_id, COUNT(*) as book_count
+                        FROM book_categories
+                        GROUP BY category_id
+                    ) book_counts ON categories.id = book_counts.category_id
+                """
+                categories_query = categories_base_query + where_clause + """
                     ORDER BY categories.name
                     LIMIT %s OFFSET %s
                 """

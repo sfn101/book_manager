@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 from database import get_db
 from util import normalize_strings
-import hashlib
+import bcrypt
 
 users_api = Blueprint('users_api', __name__, url_prefix='/api/users')
 
@@ -75,8 +75,8 @@ def add_user():
         username = normalize_strings(username)
         email = normalize_strings(email)
         
-        # Hash the password
-        password_hash = hashlib.sha256(password.encode()).hexdigest()
+        # Hash the password using bcrypt
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
         with get_db() as conn:
             with conn.cursor() as cursor:
@@ -110,8 +110,8 @@ def update_user(user_id):
             if role not in ('admin', 'user'):
                 return jsonify({"error": "Invalid role. Allowed values are 'admin' or 'user'."}), 400
 
-        # Hash password if provided
-        password_hash = hashlib.sha256(password.encode()).hexdigest() if password else None
+        # Hash password if provided using bcrypt
+        password_hash = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8') if password else None
 
         if not username and not email and not password_hash and role is None:
             return jsonify({"error": "At least one field (username, email, password, or role) is required"}), 400

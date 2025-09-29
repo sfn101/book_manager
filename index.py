@@ -1,34 +1,83 @@
+"""
+Books Manager Application - Main Flask Application
+=================================================
+
+A comprehensive Flask-based web application for managing books, authors, categories,
+and user collections. Features include:
+
+- User authentication and authorization
+- Book management with Open Library integration
+- Author and category management
+- User collections and book organization
+- Admin dashboard with CRUD operations
+- Search and filtering capabilities
+- Responsive web interface
+
+Author: Books Manager Team
+Version: 1.0.0
+"""
+
 from flask import Flask, render_template, url_for, redirect, jsonify, request, session, flash
 from routes import books_api, categories_api, authors_api, users_api, collections_api, languages_api
 from routes.frontend_api import frontend_api
+from routes.search_api import search_api
+from routes.statistics_api import statistics_api
 from routes.auth import auth, get_current_user, is_logged_in, login_required, admin_required, is_admin, can_edit_collection
 from database import get_db
+from services.home_service import HomeService
+from services.books_service import BooksService
+from util.pagination import Pagination
 import requests
 from datetime import datetime
 import random
 import os
 
+# Initialize Flask application
 app = Flask(__name__)
 
-# Session configuration
-app.secret_key = os.getenv('SECRET_KEY', 'your-secret-key-change-in-production')
-app.config['SESSION_COOKIE_SECURE'] = False  # Set to True in production with HTTPS
-app.config['SESSION_COOKIE_HTTPONLY'] = True
-app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+# =============================================================================
+# CONFIGURATION SETUP
+# =============================================================================
+# Load configuration based on environment (development/production)
+from config import config
+config_class = config.get(os.getenv('FLASK_ENV', 'development'), config['default'])
+app.config.from_object(config_class)
 
-# Register blueprints
-app.register_blueprint(books_api)
-app.register_blueprint(categories_api)
-app.register_blueprint(languages_api)
-app.register_blueprint(collections_api)
-app.register_blueprint(users_api)
-app.register_blueprint(authors_api)
-app.register_blueprint(frontend_api)
-app.register_blueprint(auth)
+# Validate configuration settings
+try:
+    config_class.validate_config()
+except ValueError as e:
+    print(f"Configuration error: {e}")
+    if os.getenv('FLASK_ENV') == 'production':
+        raise
 
-# Make auth functions available to all templates
+# =============================================================================
+# BLUEPRINT REGISTRATION
+# =============================================================================
+# Register all API blueprints for modular routing
+app.register_blueprint(books_api)          # Book management endpoints
+app.register_blueprint(categories_api)     # Category management endpoints
+app.register_blueprint(languages_api)      # Language management endpoints
+app.register_blueprint(collections_api)    # Collection management endpoints
+app.register_blueprint(users_api)          # User management endpoints
+app.register_blueprint(authors_api)        # Author management endpoints
+app.register_blueprint(frontend_api)       # Frontend-specific endpoints
+app.register_blueprint(auth)               # Authentication endpoints
+app.register_blueprint(search_api)         # Search functionality endpoints
+app.register_blueprint(statistics_api)     # Statistics endpoints
+
+# =============================================================================
+# TEMPLATE CONTEXT PROCESSORS
+# =============================================================================
+# Make authentication functions available to all templates
 @app.context_processor
 def inject_auth():
+    """
+    Inject authentication context into all templates.
+    
+    Returns:
+        dict: Authentication context including current user info and permissions
+    """
     return {
         'current_user': get_current_user(),
         'is_logged_in': is_logged_in(),
@@ -36,167 +85,67 @@ def inject_auth():
         'can_edit_collection': can_edit_collection
     }
 
-def get_books_data():
-    """Fetch books data from the database"""
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""SELECT 
-                               books.id,
-                               books.title,
-                               books.publication_year,
-                               books.open_library_id,
-                               books.cover_id,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT categories.name) FILTER (WHERE categories.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS categories,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT languages.name) FILTER (WHERE languages.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS languages,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT authors.name) FILTER (WHERE authors.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS authors
-                               FROM books
-                               LEFT JOIN book_languages ON books.id = book_languages.book_id
-                               LEFT JOIN languages ON book_languages.language_id = languages.id
-                               LEFT JOIN book_authors ON books.id = book_authors.book_id
-                               LEFT JOIN authors ON book_authors.author_id = authors.id
-                               LEFT JOIN book_categories ON books.id = book_categories.book_id
-                               LEFT JOIN categories ON book_categories.category_id = categories.id
-                               GROUP BY books.id, books.title, books.publication_year, books.open_library_id, books.cover_id
-                               ORDER BY books.id""")
-                return cursor.fetchall()
-    except Exception as e:
-        print(f"Error fetching books: {e}")
-        return []
 
-def get_categories_data():
-    """Fetch categories data from the database"""
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT * FROM categories ORDER BY name")
-                return cursor.fetchall()
-    except Exception as e:
-        print(f"Error fetching categories: {e}")
-        return []
 
-def get_authors_data():
-    """Fetch authors data from the database"""
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""
-                    SELECT 
-                        authors.id, 
-                        authors.name,
-                        authors.image_url,
-                        COUNT(books.id) as book_count,
-                        COALESCE(
-                            ARRAY_AGG(books.title) FILTER (WHERE books.title IS NOT NULL), 
-                            ARRAY[]::text[]
-                        ) as book_titles
-                    FROM authors
-                    LEFT JOIN book_authors ON authors.id = book_authors.author_id
-                    LEFT JOIN books ON book_authors.book_id = books.id
-                    GROUP BY authors.id, authors.name, authors.image_url
-                    ORDER BY book_count DESC, authors.name;
-                """)
-                return cursor.fetchall()
-    except Exception as e:
-        print(f"Error fetching authors: {e}")
-        return []
-
-def get_statistics():
-    """Get application statistics"""
-    try:
-        with get_db() as conn:
-            with conn.cursor() as cursor:
-                stats = {}
-                
-                cursor.execute("SELECT COUNT(*) as count FROM books")
-                stats['total_books'] = cursor.fetchone()['count']
-                
-                cursor.execute("SELECT COUNT(*) as count FROM authors")
-                stats['total_authors'] = cursor.fetchone()['count']
-                
-                cursor.execute("SELECT COUNT(*) as count FROM categories")
-                stats['total_categories'] = cursor.fetchone()['count']
-                
-                cursor.execute("SELECT COUNT(*) as count FROM users")
-                stats['total_users'] = cursor.fetchone()['count']
-
-                cursor.execute("SELECT COUNT(*) as count FROM collections")
-                stats['total_collections'] = cursor.fetchone()['count']
-                
-                cursor.execute("SELECT COUNT(*) as count FROM books WHERE cover_id IS NOT NULL")
-                stats['books_with_covers'] = cursor.fetchone()['count']
-                
-                cursor.execute("SELECT COUNT(*) as count FROM books WHERE cover_id IS NULL")
-                stats['missing_covers'] = cursor.fetchone()['count']
-                
-                return stats
-    except Exception as e:
-        print(f"Error fetching statistics: {e}")
-        return {}
-
-def organize_books_by_category(books, categories):
-    """Organize books by category for tabbed display"""
-    books_by_category = {'all': list(books)}
-    
-    for category in categories:
-        category_name = category['name']
-        category_books = [book for book in books 
-                         if book['categories'] and category_name in book['categories']]
-        books_by_category[category_name] = category_books
-    
-    return books_by_category
+# =============================================================================
+# ROUTE DEFINITIONS
+# =============================================================================
 
 @app.route('/')
 def home():
+    """
+    Home page route displaying featured books and application statistics.
+    
+    Returns:
+        str: Rendered home page template with book data and statistics
+    """
+    home_data = HomeService.get_home_data()
+    return render_template('home.html', **home_data)
+
+@app.route('/author/<string:author_name>')
+def author_detail_page(author_name):
+    """Server-rendered author page with Open Library info and local books grid."""
     try:
-        # Fetch all data
-        books = get_books_data()
-        categories = get_categories_data()
-        authors = get_authors_data()
-        stats = get_statistics()
-        
-        print(f"DEBUG: Found {len(books)} books")
-        print(f"DEBUG: Sample book: {books[0] if books else 'No books'}")
-        
-        # Organize data for template
-        featured_books = books[:6] if books else []
-        popular_books = books[6:14] if len(books) > 6 else books
-        latest_books = books[-8:] if len(books) >= 8 else books
-        special_books = books[-5:] if len(books) >= 5 else books
-        
-        print(f"DEBUG: Featured books: {len(featured_books)}")
-        print(f"DEBUG: Popular books: {len(popular_books)}")
-        
-        # Organize books by category
-        books_by_category_data = organize_books_by_category(books, categories)
-        
-        return render_template('home.html',
-                             books=books,
-                             books_by_category=books_by_category_data,
-                             featured_books=featured_books,
-                             popular_books=popular_books,
-                             latest_books=latest_books,
-                             special_books=special_books,
-                             stats=stats)
+        from services.open_library_service import OpenLibraryService
+
+        # Fetch Open Library author info (best-effort)
+        ol_author = OpenLibraryService.search_author_by_name(author_name) or {}
+        author_image_url = None
+        if ol_author.get('open_library_key'):
+            author_image_url = OpenLibraryService.get_author_image_url(ol_author['open_library_key'], 'L')
+
+        # Fetch books by this author from local DB
+        with get_db() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    """
+                    SELECT DISTINCT b.id, b.title, b.publication_year, b.cover_id,
+                           COALESCE(ARRAY_AGG(DISTINCT a2.name) FILTER (WHERE a2.name IS NOT NULL), ARRAY[]::text[]) AS authors,
+                           COALESCE(ARRAY_AGG(DISTINCT c.name) FILTER (WHERE c.name IS NOT NULL), ARRAY[]::text[]) AS categories
+                    FROM books b
+                    LEFT JOIN book_authors ba ON b.id = ba.book_id
+                    LEFT JOIN authors a ON ba.author_id = a.id
+                    LEFT JOIN book_categories bc ON b.id = bc.book_id
+                    LEFT JOIN categories c ON bc.category_id = c.id
+                    LEFT JOIN book_authors ba2 ON b.id = ba2.book_id
+                    LEFT JOIN authors a2 ON ba2.author_id = a2.id
+                    WHERE LOWER(a.name) = LOWER(%s)
+                    GROUP BY b.id, b.title, b.publication_year, b.cover_id
+                    ORDER BY b.title
+                    """,
+                    (author_name,)
+                )
+                books = cursor.fetchall() or []
+
+        return render_template(
+            'author_detail.html',
+            author_name=author_name,
+            author_image_url=author_image_url,
+            ol_author=ol_author,
+            books=books,
+        )
     except Exception as e:
-        print(f"Home route error: {e}")
-        return render_template('home.html',
-                             books=[],
-                             books_by_category={},
-                             featured_books=[],
-                             popular_books=[],
-                             latest_books=[],
-                             special_books=[],
-                             stats={})
+        return render_template('author_detail.html', author_name=author_name, author_image_url=None, ol_author={}, books=[], error=str(e))
 
 @app.route('/book/<int:book_id>')
 def book_detail(book_id):
@@ -237,7 +186,6 @@ def book_detail(book_id):
                 else:
                     return render_template('404.html'), 404
     except Exception as e:
-        print(f"Error fetching book {book_id}: {e}")
         return render_template('500.html'), 500
 
 @app.route('/admin')
@@ -326,111 +274,19 @@ def admin_dashboard():
                              users=users)
         
     except Exception as e:
-        print(f"Admin dashboard error: {e}")
         return render_template('admin_enhanced.html', stats={}, error=str(e))
 
 @app.route('/books')
 def all_books():
-    """All books page with search and pagination"""
-    try:
-        page = request.args.get('page', 1, type=int)
-        search = request.args.get('search', '').strip()
-        category = request.args.get('category', '').strip()
-        per_page = 20
-        
-        with get_db() as conn:
-            with conn.cursor() as cursor:
-                # Build the query based on filters
-                where_conditions = []
-                params = []
-                
-                if search:
-                    where_conditions.append("""
-                        (books.title ILIKE %s 
-                         OR authors.name ILIKE %s 
-                         OR categories.name ILIKE %s)
-                    """)
-                    search_param = f'%{search}%'
-                    params.extend([search_param, search_param, search_param])
-                
-                if category:
-                    where_conditions.append("categories.name = %s")
-                    params.append(category)
-                
-                where_clause = ""
-                if where_conditions:
-                    where_clause = "WHERE " + " AND ".join(where_conditions)
-                
-                # Get total count
-                count_query = f"""
-                    SELECT COUNT(DISTINCT books.id)
-                    FROM books
-                    LEFT JOIN book_authors ON books.id = book_authors.book_id
-                    LEFT JOIN authors ON book_authors.author_id = authors.id
-                    LEFT JOIN book_categories ON books.id = book_categories.book_id
-                    LEFT JOIN categories ON book_categories.category_id = categories.id
-                    {where_clause}
-                """
-                cursor.execute(count_query, params)
-                result = cursor.fetchone()
-                total = list(result.values())[0] if result else 0
-                
-                # Get books for current page
-                offset = (page - 1) * per_page
-                books_query = f"""
-                    SELECT DISTINCT books.id, books.title, books.publication_year, books.cover_id,
-                           COALESCE(
-                               ARRAY_AGG(DISTINCT authors.name) FILTER (WHERE authors.name IS NOT NULL), 
-                               ARRAY[]::text[]
-                           ) AS authors,
-                           COALESCE(
-                               ARRAY_AGG(DISTINCT categories.name) FILTER (WHERE categories.name IS NOT NULL), 
-                               ARRAY[]::text[]
-                           ) AS categories
-                    FROM books
-                    LEFT JOIN book_authors ON books.id = book_authors.book_id
-                    LEFT JOIN authors ON book_authors.author_id = authors.id
-                    LEFT JOIN book_categories ON books.id = book_categories.book_id
-                    LEFT JOIN categories ON book_categories.category_id = categories.id
-                    {where_clause}
-                    GROUP BY books.id, books.title, books.publication_year, books.cover_id
-                    ORDER BY books.title
-                    LIMIT %s OFFSET %s
-                """
-                cursor.execute(books_query, params + [per_page, offset])
-                books = cursor.fetchall()
-                
-                # Get categories for filter dropdown
-                cursor.execute("SELECT id, name FROM categories ORDER BY name")
-                categories = cursor.fetchall()
-                
-                # Simple pagination object
-                class Pagination:
-                    def __init__(self, page, per_page, total):
-                        self.page = page
-                        self.per_page = per_page
-                        self.total = total
-                        self.pages = (total - 1) // per_page + 1 if total > 0 else 0
-                        self.has_prev = page > 1
-                        self.has_next = page < self.pages
-                        self.prev_num = page - 1 if self.has_prev else None
-                        self.next_num = page + 1 if self.has_next else None
-                    
-                    def iter_pages(self):
-                        start = max(1, self.page - 2)
-                        end = min(self.pages + 1, self.page + 3)
-                        return range(start, end)
-                
-                pagination = Pagination(page, per_page, total)
-                
-                return render_template('all_books.html', 
-                                     books=books, 
-                                     categories=categories,
-                                     pagination=pagination)
-                
-    except Exception as e:
-        print(f"All books error: {e}")
-        return render_template('all_books.html', books=[], categories=[], error=str(e))
+    """All books page with search, filters, and pagination"""
+    page = request.args.get('page', 1, type=int)
+    sort_by = request.args.get('sort', 'title').strip()
+    per_page = 20
+    
+    filters = BooksService.build_filters_from_request(request.args)
+    page_data = BooksService.get_books_page_data(page, per_page, filters, sort_by)
+    
+    return render_template('all_books.html', **page_data)
 
 @app.route('/authors')
 def all_authors():
@@ -451,26 +307,27 @@ def all_authors():
                     params.append(f'%{search}%')
                 
                 # Get total count
-                count_query = f"""
+                count_base_query = """
                     SELECT COUNT(DISTINCT authors.id)
                     FROM authors
-                    {where_clause}
                 """
+                count_query = count_base_query + where_clause
                 cursor.execute(count_query, params)
                 result = cursor.fetchone()
                 total = list(result.values())[0] if result else 0
                 
                 # Get authors for current page with book count
                 offset = (page - 1) * per_page
-                authors_query = f"""
+                authors_base_query = """
                     SELECT authors.id, authors.name, authors.image_url,
                            COUNT(DISTINCT books.id) as book_count
                     FROM authors
                     LEFT JOIN book_authors ON authors.id = book_authors.author_id
                     LEFT JOIN books ON book_authors.book_id = books.id
-                    {where_clause}
+                """
+                authors_query = authors_base_query + where_clause + """
                     GROUP BY authors.id, authors.name, authors.image_url
-                    ORDER BY authors.name
+                    ORDER BY LOWER(authors.name)
                     LIMIT %s OFFSET %s
                 """
                 cursor.execute(authors_query, params + [per_page, offset])
@@ -500,7 +357,6 @@ def all_authors():
                                      pagination=pagination)
                 
     except Exception as e:
-        print(f"All authors error: {e}")
         return render_template('all_authors.html', authors=[], error=str(e))
 
 @app.route('/collections')
@@ -525,6 +381,7 @@ def collections_page():
                                        DISTINCT jsonb_build_object(
                                            'id', c.id,
                                            'name', c.name,
+                                           'description', c.description,
                                            'created_at', TO_CHAR(c.created_at, 'Mon DD, YYYY'),
                                            'book_count', (
                                                SELECT COUNT(*) 
@@ -552,6 +409,7 @@ def collections_page():
                                        DISTINCT jsonb_build_object(
                                            'id', c.id,
                                            'name', c.name,
+                                           'description', c.description,
                                            'created_at', TO_CHAR(c.created_at, 'Mon DD, YYYY'),
                                            'book_count', (
                                                SELECT COUNT(*) 
@@ -585,7 +443,6 @@ def collections_page():
         return render_template('collections.html', users=users, books=books, is_admin=is_admin)
         
     except Exception as e:
-        print(f"Collections page error: {e}")
         return render_template('collections.html', users=[], books=[], error=str(e), is_admin=False)
 
 @app.route('/collections/create', methods=['POST'])
@@ -615,7 +472,6 @@ def create_collection():
         return redirect('/collections?success=Collection created successfully')
         
     except Exception as e:
-        print(f"Create collection error: {e}")
         return redirect('/collections?error=Failed to create collection')
 
 @app.route('/collections/edit', methods=['POST'])
@@ -652,7 +508,6 @@ def edit_collection():
         return redirect('/collections?success=Collection updated successfully')
         
     except Exception as e:
-        print(f"Edit collection error: {e}")
         return redirect('/collections?error=Failed to update collection')
 
 @app.route('/collections/<int:collection_id>')
@@ -690,7 +545,6 @@ def get_collection(collection_id):
                 })
                 
     except Exception as e:
-        print(f"Get collection error: {e}")
         return jsonify({'success': False, 'message': 'Server error'})
 
 @app.route('/collections/<int:collection_id>/edit', methods=['POST'])
@@ -729,7 +583,6 @@ def edit_collection_by_id(collection_id):
         return redirect('/collections')
         
     except Exception as e:
-        print(f"Edit collection by ID error: {e}")
         flash('Failed to update collection', 'error')
         return redirect('/collections')
 
@@ -756,7 +609,6 @@ def delete_collection(collection_id):
         return jsonify({'success': True, 'message': 'Collection deleted successfully'})
         
     except Exception as e:
-        print(f"Delete collection error: {e}")
         return jsonify({'success': False, 'message': 'Server error'})
 
 @app.route('/collections/<int:collection_id>/books')
@@ -820,7 +672,6 @@ def manage_collection_books(collection_id):
                                      available_books=available_books)
                 
     except Exception as e:
-        print(f"Manage collection books error: {e}")
         return "<div class='alert alert-danger'>Error loading books</div>"
 
 @app.route('/collections/<int:collection_id>/books/add', methods=['POST'])
@@ -869,7 +720,6 @@ def add_book_to_collection(collection_id):
         return jsonify({'success': True, 'message': 'Book added to collection'})
         
     except Exception as e:
-        print(f"Add book to collection error: {e}")  # Log the error for debugging
         return jsonify({'success': False, 'message': 'Server error'})
 
 @app.route('/collections/<int:collection_id>/books/remove', methods=['POST'])
@@ -904,7 +754,6 @@ def remove_book_from_collection(collection_id):
         return jsonify({'success': True, 'message': 'Book removed from collection'})
         
     except Exception as e:
-        print(f"Remove book from collection error: {e}")
         return jsonify({'success': False, 'message': 'Server error'})
 
 @app.route('/collections/<int:collection_id>/books/search')
@@ -1002,7 +851,6 @@ def search_books_for_collection(collection_id):
                 return html
                 
     except Exception as e:
-        print(f"Search books error: {e}")
         return "<div class='alert alert-danger'>Error searching books</div>"
 
 @app.route('/collections/<int:collection_id>/books/more')
@@ -1083,7 +931,6 @@ def load_more_books_for_collection(collection_id):
                 return html
                 
     except Exception as e:
-        print(f"Load more books error: {e}")
         return "<div class='alert alert-danger'>Error loading more books</div>"
 
 @app.route('/search')

@@ -22,27 +22,28 @@ def get_languages():
                 where_clause = ""
                 search_params = []
                 if search:
-                    where_clause = "WHERE languages.name ILIKE %s OR languages.code ILIKE %s"
-                    search_term = f"%{search}%"
-                    search_params = [search_term, search_term]
+                    where_clause = "WHERE languages.name ILIKE %s"
+                    search_params = [f"%{search}%"]
                 
                 # Get total count
-                count_query = f"SELECT COUNT(*) FROM languages {where_clause}"
+                count_query = "SELECT COUNT(*) FROM languages " + where_clause
                 cursor.execute(count_query, search_params)
                 total_count = cursor.fetchone()['count']
                 
                 # Get languages with pagination and book count
-                languages_query = f"""
+                languages_base_query = """
                     SELECT 
                         languages.id, 
                         languages.name,
-                        languages.code,
-                        COUNT(books.id) as book_count
+                        COALESCE(book_counts.book_count, 0) as book_count
                     FROM languages
-                    LEFT JOIN book_languages ON languages.id = book_languages.language_id
-                    LEFT JOIN books ON book_languages.book_id = books.id
-                    {where_clause}
-                    GROUP BY languages.id, languages.name, languages.code
+                    LEFT JOIN (
+                        SELECT language_id, COUNT(*) as book_count
+                        FROM book_languages
+                        GROUP BY language_id
+                    ) book_counts ON languages.id = book_counts.language_id
+                """
+                languages_query = languages_base_query + where_clause + """
                     ORDER BY languages.name
                     LIMIT %s OFFSET %s
                 """

@@ -99,39 +99,41 @@
                         <div class="card-body text-center">
                             <!-- Author Image -->
                             <div class="author-image mb-3">
+                                {% set fallback_img = url_for('static', filename='images/default-profile.png') %}
                                 {% if author.image_url %}
                                     <img src="{{ author.image_url }}" 
                                          alt="{{ author.name }}" 
                                          class="rounded-circle author-photo"
-                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-                                    <div class="author-placeholder rounded-circle" style="display: none;">
-                                        {{ author.name[0].upper() }}
-                                    </div>
+                                         data-fallback="{{ fallback_img }}"
+                                         onerror="this.onerror=null; this.src=this.dataset.fallback;">
                                 {% else %}
-                                    <div class="author-placeholder rounded-circle">
-                                        {{ author.name[0].upper() }}
-                                    </div>
+                                    <img src="{{ fallback_img }}" 
+                                         alt="{{ author.name }}" 
+                                         class="rounded-circle author-photo"
+                                         data-author-name="{{ author.name }}"
+                                         data-fallback="{{ fallback_img }}">
                                 {% endif %}
                             </div>
                             
                             <!-- Author Info -->
-                            <h5 class="card-title mb-2">{{ author.name }}</h5>
+                            <h5 class="card-title mb-2"><a href="/author/{{ author.name }}" class="text-decoration-none">{{ author.name }}</a></h5>
                             <p class="text-muted mb-3">
                                 {{ author.book_count }} book{{ 's' if author.book_count != 1 else '' }}
                             </p>
                             
                             <!-- Action Buttons -->
                             <div class="d-flex flex-column gap-2">
-                                <button type="button" class="btn btn-primary btn-sm" 
-                                        onclick="viewAuthorBooks('{{ author.name }}')">
-                                    <i class="icon icon-book"></i> View Books
-                                </button>
+                                <a href="/author/{{ author.name }}" class="btn btn-primary btn-sm">
+                                    <i class="icon icon-user"></i> View Author
+                                </a>
                                 
+                                {% if is_admin %}
                                 <button type="button" class="btn btn-add-image btn-sm"
                                         onclick="showImageUrlModal('{{ author.id }}', '{{ author.name }}')">
                                     <i class="icon icon-image"></i> 
                                     {% if author.image_url %}Update{% else %}Add{% endif %} Image
                                 </button>
+                                {% endif %}
                             </div>
                     </div>
                 </div>
@@ -448,6 +450,33 @@
 </style>
 
 <script>
+// Try to load Open Library image for authors missing image_url
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('img.author-photo[data-author-name]').forEach(async (img) => {
+        try {
+            const name = img.getAttribute('data-author-name');
+            const res = await fetch(`/api/frontend/authors/image-by-name?name=${encodeURIComponent(name)}`);
+            const data = await res.json();
+            if (data && data.image_url) {
+                // Preload and verify dimensions to avoid 1x1 px images
+                const testImg = new Image();
+                testImg.onload = function() {
+                    if (testImg.naturalWidth > 5 && testImg.naturalHeight > 5) {
+                        img.src = data.image_url;
+                    } else {
+                        img.src = img.dataset.fallback;
+                    }
+                };
+                testImg.onerror = function() {
+                    img.src = img.dataset.fallback;
+                };
+                testImg.src = data.image_url;
+            }
+        } catch (e) {
+            // ignore
+        }
+    });
+});
 // View Author Books
 async function viewAuthorBooks(authorName) {
     const modal = new bootstrap.Modal(document.getElementById('authorBooksModal'));

@@ -12,20 +12,38 @@
 
     <!-- Search and Filter Bar -->
     <div class="row mb-4">
-        <div class="col-md-8 align-items-center">
+        <div class="col-md-6 align-items-center">
             <form method="GET" class="d-flex">
-                <input type="text" name="search" class="form-control me-2" placeholder="Search books, authors, categories..." value="{{ request.args.get('search', '') }}">
+                <input type="text" name="search" class="form-control me-2" placeholder="Search books, authors, categories..." value="{{ current_filters.search if current_filters and current_filters.search else '' }}">
                 <button type="submit" class="btn btn-primary my-0">Search</button>
             </form>
         </div>
-        <div class="col-md-4">
-            <select class="form-select" id="categoryFilter" onchange="filterByCategory()">
+        <div class="col-md-2">
+            <select class="form-select" id="categoryFilter" onchange="applyFilters()">
                 <option value="">All Categories</option>
                 {% for category in categories %}
-                <option value="{{ category.name }}" {% if request.args.get('category') == category.name %}selected{% endif %}>
+                <option value="{{ category.name }}" {% if current_filters and current_filters.category == category.name %}selected{% endif %}>
                     {{ category.name }}
                 </option>
                 {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="languageFilter" onchange="applyFilters()">
+                <option value="">All Languages</option>
+                {% for language in languages %}
+                <option value="{{ language.name }}" {% if current_filters and current_filters.language == language.name %}selected{% endif %}>
+                    {{ language.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="sortFilter" onchange="applyFilters()">
+                <option value="title" {% if current_filters and current_filters.sort == 'title' %}selected{% endif %}>Title A-Z</option>
+                <option value="title_desc" {% if current_filters and current_filters.sort == 'title_desc' %}selected{% endif %}>Title Z-A</option>
+                <option value="year" {% if current_filters and current_filters.sort == 'year' %}selected{% endif %}>Year (Newest)</option>
+                <option value="year_asc" {% if current_filters and current_filters.sort == 'year_asc' %}selected{% endif %}>Year (Oldest)</option>
             </select>
         </div>
     </div>
@@ -86,7 +104,7 @@
                 <ul class="pagination justify-content-center">
                     {% if pagination.has_prev %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('all_books', page=pagination.prev_num, search=request.args.get('search', ''), category=request.args.get('category', '')) }}">Previous</a>
+                        <a class="page-link" href="{{ url_for('all_books', page=pagination.prev_num, search=current_filters.search if current_filters else '', category=current_filters.category if current_filters else '', language=current_filters.language if current_filters else '', sort=current_filters.sort if current_filters else '') }}">Previous</a>
                     </li>
                     {% endif %}
 
@@ -94,7 +112,7 @@
                         {% if page_num %}
                             {% if page_num != pagination.page %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('all_books', page=page_num, search=request.args.get('search', ''), category=request.args.get('category', '')) }}">{{ page_num }}</a>
+                                <a class="page-link" href="{{ url_for('all_books', page=page_num, search=current_filters.search if current_filters else '', category=current_filters.category if current_filters else '', language=current_filters.language if current_filters else '', sort=current_filters.sort if current_filters else '') }}">{{ page_num }}</a>
                             </li>
                             {% else %}
                             <li class="page-item active">
@@ -110,7 +128,7 @@
 
                     {% if pagination.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('all_books', page=pagination.next_num, search=request.args.get('search', ''), category=request.args.get('category', '')) }}">Next</a>
+                        <a class="page-link" href="{{ url_for('all_books', page=pagination.next_num, search=current_filters.search if current_filters else '', category=current_filters.category if current_filters else '', language=current_filters.language if current_filters else '', sort=current_filters.sort if current_filters else '') }}">Next</a>
                     </li>
                     {% endif %}
                 </ul>
@@ -134,6 +152,17 @@
     border-radius: 8px;
 }
 
+/* Responsive filter bar */
+@media (max-width: 768px) {
+    .row.mb-4 .col-md-2 {
+        margin-bottom: 10px;
+    }
+    
+    .row.mb-4 .col-md-6 {
+        margin-bottom: 10px;
+    }
+}
+
 .btn-primary {
     border-radius: 8px;
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -146,19 +175,43 @@
 </style>
 
 <script>
-function filterByCategory() {
-    const categoryFilter = document.getElementById('categoryFilter');
-    const selectedCategory = categoryFilter.value;
+function applyFilters() {
+    const searchParams = new URLSearchParams(window.location.search);
     
-    if (selectedCategory) {
-        const searchParams = new URLSearchParams(window.location.search);
-        searchParams.set('category', selectedCategory);
-        window.location.href = `${window.location.pathname}?${searchParams.toString()}`;
+    // Get current filter values
+    const categoryFilter = document.getElementById('categoryFilter');
+    const languageFilter = document.getElementById('languageFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    
+    // Update URL parameters
+    if (categoryFilter.value) {
+        searchParams.set('category', categoryFilter.value);
     } else {
-        const searchParams = new URLSearchParams(window.location.search);
         searchParams.delete('category');
-        window.location.href = `${window.location.pathname}?${searchParams.toString()}`;
     }
+    
+    if (languageFilter.value) {
+        searchParams.set('language', languageFilter.value);
+    } else {
+        searchParams.delete('language');
+    }
+    
+    if (sortFilter.value && sortFilter.value !== 'title') {
+        searchParams.set('sort', sortFilter.value);
+    } else {
+        searchParams.delete('sort');
+    }
+    
+    // Reset to page 1 when filters change
+    searchParams.delete('page');
+    
+    // Navigate to new URL
+    window.location.href = `${window.location.pathname}?${searchParams.toString()}`;
+}
+
+// Legacy function for backward compatibility
+function filterByCategory() {
+    applyFilters();
 }
 </script>
 {% endblock %}

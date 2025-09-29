@@ -1,5 +1,6 @@
 from flask import Blueprint, jsonify, request
 from database import get_db
+from database.data_access import get_books_data, get_book_by_id
 from util import normalize_strings
 from services.open_library_service import OpenLibraryService
 
@@ -9,77 +10,19 @@ books_api = Blueprint('books_api', __name__, url_prefix='/api/books')
 def get_books():
     """Fetch all books from the database."""
     try:
-        with get_db() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""SELECT 
-                               books.id,
-                               books.title,
-                               books.publication_year,
-                               books.open_library_id,
-                               books.cover_id,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT categories.name) FILTER (WHERE categories.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS categories,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT languages.name) FILTER (WHERE languages.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS languages,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT authors.name) FILTER (WHERE authors.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS authors
-                               FROM books
-                               LEFT JOIN book_languages ON books.id = book_languages.book_id
-                               LEFT JOIN languages ON book_languages.language_id = languages.id
-                               LEFT JOIN book_authors ON books.id = book_authors.book_id
-                               LEFT JOIN authors ON book_authors.author_id = authors.id
-                               LEFT JOIN book_categories ON books.id = book_categories.book_id
-                               LEFT JOIN categories ON book_categories.category_id = categories.id
-                               GROUP BY books.id, books.title, books.publication_year, books.open_library_id, books.cover_id
-                               ORDER BY books.id""")
-                books = cursor.fetchall()
-                return jsonify(books)
+        books = get_books_data()
+        return jsonify(books)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
 @books_api.route('/<int:book_id>', methods=['GET'])
 def get_book(book_id):
     try:
-        with get_db() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute("""SELECT 
-                                       books.id,
-                               books.title,
-                               books.publication_year,
-                               books.open_library_id,
-                               books.cover_id,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT categories.name) FILTER (WHERE categories.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS categories,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT languages.name) FILTER (WHERE languages.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS languages,
-                               COALESCE(
-                                   ARRAY_AGG(DISTINCT authors.name) FILTER (WHERE authors.name IS NOT NULL), 
-                                   ARRAY[]::text[]
-                               ) AS authors
-                               FROM books
-                               LEFT JOIN book_languages ON books.id = book_languages.book_id
-                               LEFT JOIN languages ON book_languages.language_id = languages.id
-                               LEFT JOIN book_authors ON books.id = book_authors.book_id
-                               LEFT JOIN authors ON book_authors.author_id = authors.id
-                               LEFT JOIN book_categories ON books.id = book_categories.book_id
-                               LEFT JOIN categories ON book_categories.category_id = categories.id
-                               WHERE books.id = %s
-                               GROUP BY books.id, books.title, books.publication_year, books.open_library_id, books.cover_id""", (book_id,))
-                book = cursor.fetchone()
-                if book:
-                    return jsonify(book)
-                else:
-                    return jsonify({"error": "Book not found"}), 404
+        book = get_book_by_id(book_id)
+        if book:
+            return jsonify(book)
+        else:
+            return jsonify({"error": "Book not found"}), 404
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -170,7 +113,7 @@ def add_book():
         with get_db() as conn:
             with conn.cursor() as cursor:
                 # Check if book exists
-                cursor.execute("SELECT * FROM books WHERE LOWER(REGEXP_REPLACE(title, '\s+', ' ', 'g')) = %s", (normalize_strings(title),))
+                cursor.execute("SELECT * FROM books WHERE LOWER(REGEXP_REPLACE(title, '\\s+', ' ', 'g')) = %s", (normalize_strings(title),))
                 existing_book = cursor.fetchone()
                 if existing_book:
                     return jsonify({"error": "Book with this title already exists"}), 409
@@ -290,7 +233,7 @@ def update_book(book_id):
                 update_values = []
                 if title:
                     # Check if another book (not this one) has the same title
-                    cursor.execute("SELECT * FROM books WHERE LOWER(REGEXP_REPLACE(title, '\s+', ' ', 'g')) = %s AND id != %s", (normalize_strings(title), book_id))
+                    cursor.execute("SELECT * FROM books WHERE LOWER(REGEXP_REPLACE(title, '\\s+', ' ', 'g')) = %s AND id != %s", (normalize_strings(title), book_id))
                     title_conflict = cursor.fetchone()
                     if title_conflict:
                         return jsonify({"error": "Another book with this title already exists"}), 409
@@ -404,7 +347,7 @@ def _add_book_to_db(book_data):
     with get_db() as conn:
         with conn.cursor() as cursor:
             # Check if book exists
-            cursor.execute("SELECT * FROM books WHERE LOWER(REGEXP_REPLACE(title, '\s+', ' ', 'g')) = %s", (normalize_strings(title),))
+            cursor.execute("SELECT * FROM books WHERE LOWER(REGEXP_REPLACE(title, '\\s+', ' ', 'g')) = %s", (normalize_strings(title),))
             existing_book = cursor.fetchone()
             if existing_book:
                 raise ValueError("Book already exists")

@@ -1,17 +1,62 @@
+"""
+Authentication Module
+====================
+
+This module handles user authentication and authorization for the Books Manager application.
+It provides secure user registration, login, logout, and session management.
+
+Key Features:
+- Secure password hashing with bcrypt
+- Session-based authentication
+- Role-based access control (admin/user)
+- User profile management
+- Permission decorators for route protection
+
+Security Features:
+- bcrypt password hashing with salt
+- Session security configuration
+- Input validation and sanitization
+- SQL injection prevention with parameterized queries
+
+Author: Books Manager Team
+Version: 1.0.0
+"""
+
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session, jsonify
 from database import get_db
 from util import normalize_strings
-import hashlib
+import bcrypt
 
 auth = Blueprint('auth', __name__)
 
+# =============================================================================
+# PASSWORD SECURITY FUNCTIONS
+# =============================================================================
+
 def hash_password(password):
-    """Hash password using SHA-256"""
-    return hashlib.sha256(password.encode()).hexdigest()
+    """
+    Hash password using bcrypt with proper salt.
+    
+    Args:
+        password (str): Plain text password to hash
+        
+    Returns:
+        str: Hashed password string
+    """
+    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
 
 def verify_password(password, hashed_password):
-    """Verify password against hash"""
-    return hash_password(password) == hashed_password
+    """
+    Verify password against bcrypt hash.
+    
+    Args:
+        password (str): Plain text password to verify
+        hashed_password (str): Stored hashed password
+        
+    Returns:
+        bool: True if password matches, False otherwise
+    """
+    return bcrypt.checkpw(password.encode('utf-8'), hashed_password.encode('utf-8'))
 
 @auth.route('/login', methods=['GET', 'POST'])
 def login():
@@ -19,8 +64,6 @@ def login():
     if request.method == 'POST':
         username = request.form.get('username', '').strip()
         password = request.form.get('password', '').strip()
-        
-        print(f"DEBUG: Login attempt - username: '{username}', password length: {len(password) if password else 0}")
         
         if not username or not password:
             flash('Username and password are required', 'error')
@@ -37,12 +80,6 @@ def login():
                     """, (username, username))
                     
                     user = cursor.fetchone()
-                    
-                    print(f"DEBUG: User found: {user is not None}")
-                    if user:
-                        print(f"DEBUG: User details - id: {user['id']}, username: {user['username']}")
-                        password_match = verify_password(password, user['password_hash'])
-                        print(f"DEBUG: Password match: {password_match}")
                     
                     if user and verify_password(password, user['password_hash']):
                         # Login successful
@@ -61,7 +98,6 @@ def login():
         
         except Exception as e:
             flash('An error occurred during login', 'error')
-            print(f"Login error: {e}")
     
     return render_template('auth/login.html')
 
@@ -131,7 +167,6 @@ def signup():
         
         except Exception as e:
             flash('An error occurred during registration', 'error')
-            print(f"Signup error: {e}")
     
     return render_template('auth/signup.html')
 
@@ -153,34 +188,20 @@ def profile():
     try:
         with get_db() as conn:
             with conn.cursor() as cursor:
-                # Get user info with detailed statistics
+                # Get user info with optimized statistics
                 cursor.execute("""
                     SELECT 
                         u.id, u.username, u.email, u.created_at, u.role,
                         COUNT(DISTINCT c.id) as collection_count,
                         COUNT(DISTINCT cb.book_id) as total_books_in_collections,
-                        (
-                            SELECT COUNT(DISTINCT b.id) 
-                            FROM books b 
-                            JOIN book_categories bc ON b.id = bc.book_id 
-                            JOIN categories cat ON bc.category_id = cat.id 
-                            JOIN collection_books cb2 ON b.id = cb2.book_id 
-                            JOIN collections c2 ON cb2.collection_id = c2.id 
-                            WHERE c2.user_id = u.id
-                        ) as unique_categories,
-                        (
-                            SELECT STRING_AGG(DISTINCT cat.name, ', ') 
-                            FROM categories cat 
-                            JOIN book_categories bc ON cat.id = bc.category_id 
-                            JOIN books b ON bc.book_id = b.id 
-                            JOIN collection_books cb2 ON b.id = cb2.book_id 
-                            JOIN collections c2 ON cb2.collection_id = c2.id 
-                            WHERE c2.user_id = u.id 
-                            LIMIT 5
-                        ) as favorite_categories
+                        COUNT(DISTINCT cat.id) as unique_categories,
+                        STRING_AGG(DISTINCT cat.name, ', ') as favorite_categories
                     FROM users u
                     LEFT JOIN collections c ON u.id = c.user_id
                     LEFT JOIN collection_books cb ON c.id = cb.collection_id
+                    LEFT JOIN books b ON cb.book_id = b.id
+                    LEFT JOIN book_categories bc ON b.id = bc.book_id
+                    LEFT JOIN categories cat ON bc.category_id = cat.id
                     WHERE u.id = %s
                     GROUP BY u.id, u.username, u.email, u.created_at, u.role
                 """, (session['user_id'],))
@@ -194,7 +215,6 @@ def profile():
                 return render_template('auth/profile.html', user=user_info)
     
     except Exception as e:
-        print(f"Profile error: {e}")
         flash('Error loading profile', 'error')
         return redirect(url_for('home'))
 
