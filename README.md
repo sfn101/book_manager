@@ -8,6 +8,9 @@ This project was developed for the Geek Institute Python session, Group 1, by So
 
 For more information, please check the [documentation](doc.md).
 
+## video
+https://www.youtube.com/watch?v=3mtbnTBhQBA
+
 ## What I Learned
 
 This is my first time building a full-stack application using Python Flask and PostgreSQL, so I learned many new things, including:
