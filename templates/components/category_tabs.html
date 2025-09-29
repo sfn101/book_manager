@@ -1,0 +1,99 @@
+<!-- Category Tab Component -->
+{% macro category_tabs(categories, active_category="all") %}
+<ul class="tabs">
+    <li data-tab-target="#all-genre" class="tab {% if active_category == 'all' %}active{% endif %}">
+        All Books
+    </li>
+    {% for category in categories %}
+    <li data-tab-target="#{{ category.name|lower|replace(' ', '-') }}" class="tab {% if active_category == category.name %}active{% endif %}">
+        {{ category.name }}
+    </li>
+    {% endfor %}
+</ul>
+{% endmacro %}
+
+<!-- Books Grid by Category -->
+{% macro books_by_category(books_by_category, categories) %}
+<div class="tab-content">
+    <!-- All Books Tab -->
+    <div id="all-genre" data-tab-content class="active">
+        <div class="row">
+            {% for book in books_by_category.get('all', [])[:8] %}
+                {% from 'components/book_card.html' import book_card %}
+                {{ book_card(book) }}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Category-specific Tabs -->
+    {% for category in categories %}
+    <div id="{{ category.name|lower|replace(' ', '-') }}" data-tab-content>
+        <div class="row">
+            {% for book in books_by_category.get(category.name, [])[:8] %}
+                {% from 'components/book_card.html' import book_card %}
+                {{ book_card(book) }}
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endmacro %}
+
+<!-- Author Card Component -->
+{% macro author_card(author, card_class="col-md-3") %}
+<div class="{{ card_class }}">
+    <div class="author-item text-center" data-author-id="{{ author.id }}">
+        <div class="author-image mb-3">
+            <!-- Placeholder for author image -->
+            <div class="rounded-circle bg-light d-flex align-items-center justify-content-center mx-auto" 
+                 style="width: 80px; height: 80px;">
+                <i class="icon icon-user" style="font-size: 2rem; color: #666;"></i>
+            </div>
+        </div>
+        <h5><a href="/author/{{ author.id }}">{{ author.name }}</a></h5>
+        <p class="text-muted">
+            {{ author.book_count }} 
+            {{ 'book' if author.book_count == 1 else 'books' }}
+        </p>
+        {% if author.book_titles and author.book_titles|length > 0 %}
+            <small class="text-muted">
+                Latest: {{ author.book_titles[0] }}
+            </small>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}
+
+<!-- Statistics Component -->
+{% macro statistics_section(stats) %}
+<section class="statistics py-5 bg-light">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="stat-number">{{ stats.total_books or 0 }}</h3>
+                    <p class="stat-label">Total Books</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="stat-number">{{ stats.total_authors or 0 }}</h3>
+                    <p class="stat-label">Authors</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="stat-number">{{ stats.total_categories or 0 }}</h3>
+                    <p class="stat-label">Categories</p>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="stat-item">
+                    <h3 class="stat-number">{{ stats.total_users or 0 }}</h3>
+                    <p class="stat-label">Users</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+{% endmacro %}

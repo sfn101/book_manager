@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}Search Results for "{{ query }}" - Books Manager{% endblock %}
+
+{% block content %}
+{% from 'components/book_card.html' import book_card, book_list_item %}
+
+<div class="container py-5">
+    <div class="row">
+        <div class="col-12">
+            <h1>Search Results for "{{ query }}"</h1>
+            <p class="text-muted">{{ results|length if results else 0 }} books found</p>
+        </div>
+    </div>
+    
+    {% if results and results|length > 0 %}
+    <div class="row">
+        {% for book in results %}
+            {{ book_card(book, show_categories=true) }}
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="row">
+        <div class="col-12">
+            <div class="no-results text-center py-5">
+                <h3>No books found</h3>
+                <p class="text-muted mb-4">We couldn't find any books matching your search criteria.</p>
+                
+                <div class="suggestions">
+                    <h5>Try:</h5>
+                    <ul class="list-unstyled">
+                        <li>• Check your spelling</li>
+                        <li>• Use different keywords</li>
+                        <li>• Search by author name</li>
+                        <li>• Browse by category</li>
+                    </ul>
+                </div>
+                
+                <a href="{{ url_for('home') }}" class="btn btn-primary mt-3">
+                    Browse All Books
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

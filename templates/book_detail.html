@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+
+{% block title %}{{ book.title }} - Books Manager{% endblock %}
+
+{% block content %}
+{% from 'components/book_card.html' import book_list_item %}
+
+<div class="container py-5">
+    <div class="row">
+        <!-- Book Cover -->
+        <div class="col-md-4">
+            <div class="book-cover-large">
+                {% if book.cover_id %}
+                    <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-L.jpg" 
+                         alt="{{ book.title }}" class="img-fluid rounded shadow">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/default.png') }}" 
+                         alt="{{ book.title }}" class="img-fluid rounded shadow">
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Book Details -->
+        <div class="col-md-8">
+            <div class="book-details">
+                <h1 class="book-title mb-3">{{ book.title }}</h1>
+                
+                {% if book.authors and book.authors|length > 0 %}
+                <div class="book-authors mb-3">
+                    <h5 class="text-muted">
+                        {% for author in book.authors %}
+                            <a href="/author/{{ author }}" class="text-decoration-none">{{ author }}</a>{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </h5>
+                </div>
+                {% endif %}
+                
+                <div class="book-metadata mb-4">
+                    {% if book.publication_year %}
+                    <div class="metadata-item">
+                        <strong>Publication Year:</strong> {{ book.publication_year }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if book.languages and book.languages|length > 0 %}
+                    <div class="metadata-item">
+                        <strong>Languages:</strong> {{ book.languages|join(', ') }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if book.categories and book.categories|length > 0 %}
+                    <div class="metadata-item mb-3">
+                        <strong>Categories:</strong>
+                        {% for category in book.categories %}
+                            <span class="badge bg-primary me-1">{{ category }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    {% if book.open_library_id %}
+                    <div class="metadata-item">
+                        <strong>Open Library ID:</strong> 
+                        <a href="https://openlibrary.org/works/{{ book.open_library_id }}" target="_blank" class="text-decoration-none">
+                            {{ book.open_library_id }}
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="book-actions">
+                    <button class="btn btn-primary me-2" data-book-id="{{ book.id }}">
+                        <i class="icon icon-clipboard"></i> Add to Collection
+                    </button>
+                    {% if book.open_library_id %}
+                    <a href="https://openlibrary.org/works/{{ book.open_library_id }}" 
+                    target="_blank">
+                    <button class="btn btn-outline-secondary me-2" data-book-id="{{ book.id }}">
+                        <i class="icon icon-heart"></i> View on Open Library
+                    </button>
+                        
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Navigation -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <nav aria-label="Book navigation">
+                <div class="d-flex justify-content-between">
+                    <a href="{{ url_for('home') }}" class="btn btn-outline-primary d-flex align-items-center">
+                        <i class="icon icon-arrow-left"></i> Back to Home
+                    </a>
+
+                </div>
+            </nav>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function addToCart(bookId) {
+    // Here you can add AJAX call to your cart API
+    console.log('Adding book ' + bookId + ' to cart');
+    alert('Book added to cart!');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Add to library functionality
+    document.querySelector('[data-book-id]').addEventListener('click', function() {
+        const bookId = this.getAttribute('data-book-id');
+        // Here you can add AJAX call to your collections API
+        console.log('Adding book ' + bookId + ' to library');
+        alert('Book added to your library!');
+    });
+});
+</script>
+{% endblock %}

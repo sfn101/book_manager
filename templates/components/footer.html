@@ -1,0 +1,67 @@
+<footer id="footer">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="footer-item">
+                    <div class="company-brand">
+                        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="logo" class="footer-logo">
+                        <p>Your comprehensive books manager application. Discover, organize, and manage your book collection with ease. Connect with authors, explore categories, and build your personal library.</p>
+                    </div>
+                </div>
+            </div>
+
+          
+            
+            <div class="col-md-2">
+                <div class="footer-menu">
+                    <h5>Discover</h5>
+                    <ul class="menu-list">
+                        <li class="menu-item"><a href="{{ url_for('home') }}">Home</a></li>
+                        <li class="menu-item"><a href="/books">Books</a></li>
+                        <li class="menu-item"><a href="/authors">Authors</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="col-md-2">
+                <div class="footer-menu">
+                    <h5>My Account</h5>
+                    <ul class="menu-list">
+                        <li class="menu-item"><a href="/profile">My Profile</a></li>
+                        <li class="menu-item"><a href="/collections">My Collections</a></li>
+                        <li class="menu-item"><a href="/logout">Logout</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+        
+        </div>
+    </div>
+</footer>
+
+<div id="footer-bottom">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <div class="copyright">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p>© {{ current_year or 2024 }} Books Manager. All rights reserved. 
+                               Built with Flask and PostgreSQL.</p>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="social-links align-right">
+                                <ul>
+                                    <li><a href="#"><i class="icon icon-facebook"></i></a></li>
+                                    <li><a href="#"><i class="icon icon-twitter"></i></a></li>
+                                    <li><a href="#"><i class="icon icon-youtube-play"></i></a></li>
+                                    <li><a href="#"><i class="icon icon-behance-square"></i></a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

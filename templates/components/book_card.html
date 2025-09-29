@@ -1,0 +1,120 @@
+<!-- Book Card Component -->
+{% macro book_card(book, show_categories=false, show_price=true, card_class="col-md-3") %}
+<div class="{{ card_class }}">
+    <div class="product-item" data-book-id="{{ book.id }}">
+        <figure class="product-style">
+            {% if book.cover_id %}
+                <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-M.jpg" 
+                     alt="{{ book.title }}" class="product-item"
+                     onerror="this.src='{{ url_for('static', filename='images/default.png') }}'">
+            {% else %}
+                <img src="{{ url_for('static', filename='images/default.png') }}" 
+                     alt="{{ book.title }}" class="product-item">
+            {% endif %}
+            <button type="button" class="add-to-cart" data-product-tile="add-to-cart" data-book-id="{{ book.id }}">
+                Add to Cart
+            </button>
+        </figure>
+        <figcaption>
+            <h3><a href="/book/{{ book.id }}">{{ book.title }}</a></h3>
+            {% if book.authors and book.authors|length > 0 %}
+                <span class="author-name">
+                    {% for author in book.authors %}
+                        {{ author }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </span>
+            {% else %}
+                <span class="author-name">Unknown Author</span>
+            {% endif %}
+            
+            {% if show_categories and book.categories and book.categories|length > 0 %}
+                <div class="book-categories">
+                    {% for category in book.categories %}
+                        <span class="badge bg-secondary me-1">{{ category }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            {% if book.publication_year %}
+                <div class="publication-year">{{ book.publication_year }}</div>
+            {% endif %}
+            
+            {% if show_price %}
+                <div class="item-price">$ {{ "%.2f"|format((book.id * 7.99) % 50 + 15) }}</div>
+            {% endif %}
+        </figcaption>
+    </div>
+</div>
+{% endmacro %}
+
+<!-- Featured Book Card with larger layout -->
+{% macro featured_book_card(book) %}
+<div class="col-md-4">
+    <div class="product-item featured-book" data-book-id="{{ book.id }}">
+        <figure class="product-style">
+            {% if book.cover_id %}
+                <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-L.jpg" 
+                     alt="{{ book.title }}" class="product-item"
+                     onerror="this.src='{{ url_for('static', filename='images/default.png') }}'">
+            {% else %}
+                <img src="{{ url_for('static', filename='images/default.png') }}" 
+                     alt="{{ book.title }}" class="product-item">
+            {% endif %}
+            <button type="button" class="add-to-cart" data-product-tile="add-to-cart" data-book-id="{{ book.id }}">
+                Add to Cart
+            </button>
+        </figure>
+        <figcaption>
+            <h3><a href="/book/{{ book.id }}">{{ book.title }}</a></h3>
+            {% if book.authors and book.authors|length > 0 %}
+                <span class="author-name">
+                    {% for author in book.authors %}
+                        {{ author }}{% if not loop.last %}, {% endif %}
+                    {% endfor %}
+                </span>
+            {% endif %}
+            
+            {% if book.categories and book.categories|length > 0 %}
+                <div class="book-categories mb-2">
+                    {% for category in book.categories %}
+                        <span class="badge bg-primary me-1">{{ category }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="item-price">$ {{ "%.2f"|format((book.id * 9.99) % 60 + 20) }}</div>
+        </figcaption>
+    </div>
+</div>
+{% endmacro %}
+
+<!-- Compact Book List Item -->
+{% macro book_list_item(book) %}
+<div class="book-list-item d-flex align-items-center mb-3">
+    <div class="book-thumbnail me-3">
+        {% if book.cover_id %}
+            <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-S.jpg" 
+                 alt="{{ book.title }}" class="img-thumbnail"
+                 style="width: 60px; height: 80px; object-fit: cover;"
+                 onerror="this.src='{{ url_for('static', filename='images/default.png') }}'">
+        {% else %}
+            <img src="{{ url_for('static', filename='images/default.png') }}" 
+                 alt="{{ book.title }}" class="img-thumbnail"
+                 style="width: 60px; height: 80px; object-fit: cover;">
+        {% endif %}
+    </div>
+    <div class="book-info flex-grow-1">
+        <h6 class="mb-1"><a href="/book/{{ book.id }}">{{ book.title }}</a></h6>
+        {% if book.authors and book.authors|length > 0 %}
+            <small class="text-muted">
+                {% for author in book.authors %}
+                    {{ author }}{% if not loop.last %}, {% endif %}
+                {% endfor %}
+            </small>
+        {% endif %}
+        {% if book.publication_year %}
+            <small class="text-muted d-block">{{ book.publication_year }}</small>
+        {% endif %}
+    </div>
+</div>
+{% endmacro %}

@@ -5,11 +5,11 @@ GET {{url}}/search/harry potter
 Content-Type: application/json
 
 ### Test Case 2: Search for another book
-GET {{url}}/search/the great gatsby
+GET {{url}}/search/White Fang?limit=5
 Content-Type: application/json
 
 ### Test Case 3: Import a book directly from Open Library to database
-POST {{url}}/import/1984
+POST {{url}}/import/White Fang
 Content-Type: application/json
 
 ### Test Case 4: Import another book

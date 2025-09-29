@@ -1,0 +1,24 @@
+### Get all categories
+GET http://localhost:5000/api/categories
+
+### Get a specific category by ID
+GET http://localhost:5000/api/categories/2
+
+### Add a new category
+POST http://localhost:5000/api/categories/
+Content-Type: application/json
+
+{
+  "name": "Science"
+}
+
+### Update an existing category
+PUT http://localhost:5000/api/categories/3
+Content-Type: application/json
+
+{
+  "name": "FRTTGHhjkkvv   jJ"
+}
+
+### Delete a category
+DELETE http://localhost:5000/api/categories/2

@@ -1,0 +1,217 @@
+{% extends "base.html" %}
+
+{% block title %}All Books - Books Manager{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="display-4 text-center mb-5">All Books</h1>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="row mb-4">
+        <div class="col-md-6 align-items-center">
+            <form method="GET" class="d-flex">
+                <input type="text" name="search" class="form-control me-2" placeholder="Search books, authors, categories..." value="{{ current_filters.search if current_filters and current_filters.search else '' }}">
+                <button type="submit" class="btn btn-primary my-0">Search</button>
+            </form>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="categoryFilter" onchange="applyFilters()">
+                <option value="">All Categories</option>
+                {% for category in categories %}
+                <option value="{{ category.name }}" {% if current_filters and current_filters.category == category.name %}selected{% endif %}>
+                    {{ category.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="languageFilter" onchange="applyFilters()">
+                <option value="">All Languages</option>
+                {% for language in languages %}
+                <option value="{{ language.name }}" {% if current_filters and current_filters.language == language.name %}selected{% endif %}>
+                    {{ language.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select class="form-select" id="sortFilter" onchange="applyFilters()">
+                <option value="title" {% if current_filters and current_filters.sort == 'title' %}selected{% endif %}>Title A-Z</option>
+                <option value="title_desc" {% if current_filters and current_filters.sort == 'title_desc' %}selected{% endif %}>Title Z-A</option>
+                <option value="year" {% if current_filters and current_filters.sort == 'year' %}selected{% endif %}>Year (Newest)</option>
+                <option value="year_asc" {% if current_filters and current_filters.sort == 'year_asc' %}selected{% endif %}>Year (Oldest)</option>
+            </select>
+        </div>
+    </div>
+
+    <!-- Books Grid -->
+    <div class="row" id="booksGrid">
+        {% if books %}
+            {% for book in books %}
+            <div class="col-sm-6 col-md-4 col-lg-3 mb-4" data-categories="{{ book.categories|join(',') }}">
+                <div class="card book-card h-100">
+                    <div class="card-img-top-wrapper" style="height: 250px; overflow: hidden;">
+                        {% if book.cover_id %}
+                            <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-M.jpg" 
+                                 alt="{{ book.title }}" class="card-img-top h-100 w-100" style="object-fit: cover;"
+                                 onerror="this.src='{{ url_for('static', filename='images/default.png') }}'">
+                        {% else %}
+                            <img src="{{ url_for('static', filename='images/default.png') }}" 
+                                 alt="{{ book.title }}" class="card-img-top h-100 w-100" style="object-fit: cover;">
+                        {% endif %}
+                    </div>
+                    <div class="card-body d-flex flex-column">
+                        <h5 class="card-title">{{ book.title }}</h5>
+                        {% if book.authors and book.authors|length > 0 %}
+                            <p class="card-text text-muted">
+                                by {{ book.authors|join(', ') }}
+                            </p>
+                        {% endif %}
+                        {% if book.publication_year %}
+                            <p class="card-text"><small class="text-muted">{{ book.publication_year }}</small></p>
+                        {% endif %}
+                        {% if book.categories and book.categories|length > 0 %}
+                            <p class="card-text">
+                                <small class="text-primary">{{ book.categories|join(', ') }}</small>
+                            </p>
+                        {% endif %}
+                        <div class="mt-auto">
+                            <a href="/book/{{ book.id }}" class="btn btn-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="col-12">
+                <div class="text-center py-5">
+                    <h3>No books found</h3>
+                    <p class="text-muted">Try adjusting your search or filter criteria.</p>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Pagination -->
+    {% if pagination %}
+    <div class="row mt-5">
+        <div class="col-12">
+            <nav aria-label="Books pagination">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('all_books', page=pagination.prev_num, search=current_filters.search if current_filters else '', category=current_filters.category if current_filters else '', language=current_filters.language if current_filters else '', sort=current_filters.sort if current_filters else '') }}">Previous</a>
+                    </li>
+                    {% endif %}
+
+                    {% for page_num in pagination.iter_pages() %}
+                        {% if page_num %}
+                            {% if page_num != pagination.page %}
+                            <li class="page-item">
+                                <a class="page-link" href="{{ url_for('all_books', page=page_num, search=current_filters.search if current_filters else '', category=current_filters.category if current_filters else '', language=current_filters.language if current_filters else '', sort=current_filters.sort if current_filters else '') }}">{{ page_num }}</a>
+                            </li>
+                            {% else %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ page_num }}</span>
+                            </li>
+                            {% endif %}
+                        {% else %}
+                        <li class="page-item disabled">
+                            <span class="page-link">...</span>
+                        </li>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('all_books', page=pagination.next_num, search=current_filters.search if current_filters else '', category=current_filters.category if current_filters else '', language=current_filters.language if current_filters else '', sort=current_filters.sort if current_filters else '') }}">Next</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.book-card {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.book-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+.form-control, .form-select {
+    border-radius: 8px;
+}
+
+/* Responsive filter bar */
+@media (max-width: 768px) {
+    .row.mb-4 .col-md-2 {
+        margin-bottom: 10px;
+    }
+    
+    .row.mb-4 .col-md-6 {
+        margin-bottom: 10px;
+    }
+}
+
+.btn-primary {
+    border-radius: 8px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border: none;
+}
+
+.btn-primary:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+</style>
+
+<script>
+function applyFilters() {
+    const searchParams = new URLSearchParams(window.location.search);
+    
+    // Get current filter values
+    const categoryFilter = document.getElementById('categoryFilter');
+    const languageFilter = document.getElementById('languageFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    
+    // Update URL parameters
+    if (categoryFilter.value) {
+        searchParams.set('category', categoryFilter.value);
+    } else {
+        searchParams.delete('category');
+    }
+    
+    if (languageFilter.value) {
+        searchParams.set('language', languageFilter.value);
+    } else {
+        searchParams.delete('language');
+    }
+    
+    if (sortFilter.value && sortFilter.value !== 'title') {
+        searchParams.set('sort', sortFilter.value);
+    } else {
+        searchParams.delete('sort');
+    }
+    
+    // Reset to page 1 when filters change
+    searchParams.delete('page');
+    
+    // Navigate to new URL
+    window.location.href = `${window.location.pathname}?${searchParams.toString()}`;
+}
+
+// Legacy function for backward compatibility
+function filterByCategory() {
+    applyFilters();
+}
+</script>
+{% endblock %}

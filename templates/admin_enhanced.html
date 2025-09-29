@@ -1,0 +1,3234 @@
+{% extends "base.html" %}
+
+{% block title %}Admin Dashboard - Books Manager{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Admin Design System */
+    :root {
+        --admin-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --admin-secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --admin-success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        --admin-warning: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        --admin-danger: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        --admin-info: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        --card-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        --card-shadow-hover: 0 8px 30px rgba(0,0,0,0.12);
+        --border-radius: 16px;
+        --border-radius-sm: 12px;
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Admin Header */
+    .admin-header {
+        background: var(--admin-primary);
+        border-radius: var(--border-radius);
+        padding: 2.5rem;
+        margin-bottom: 2rem;
+        color: white;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .admin-header::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="admin-grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="50" cy="50" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23admin-grain)"/></svg>');
+        opacity: 0.3;
+    }
+    
+    .admin-header-content {
+        position: relative;
+        z-index: 1;
+    }
+
+    /* Stats Cards */
+    .stats-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 1.5rem;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        border: none;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stats-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: var(--admin-primary);
+    }
+    
+    .stats-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--card-shadow-hover);
+    }
+    
+    .stats-card.primary::before { background: var(--admin-primary); }
+    .stats-card.success::before { background: var(--admin-success); }
+    .stats-card.warning::before { background: var(--admin-warning); }
+    .stats-card.danger::before { background: var(--admin-danger); }
+    .stats-card.info::before { background: var(--admin-info); }
+    
+    .stats-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        color: white;
+        margin-bottom: 1rem;
+    }
+    
+    .stats-icon.primary { background: var(--admin-primary); }
+    .stats-icon.success { background: var(--admin-success); }
+    .stats-icon.warning { background: var(--admin-warning); }
+    .stats-icon.danger { background: var(--admin-danger); }
+    .stats-icon.info { background: var(--admin-info); }
+    
+    .stats-number {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin-bottom: 0.5rem;
+    }
+    
+    .stats-label {
+        color: #718096;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.875rem;
+    }
+
+    /* Data Tables */
+    .data-table {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        overflow: hidden;
+    }
+    
+    .data-table-header {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        padding: 1.5rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .data-table-title {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #2d3748;
+        margin: 0;
+    }
+    
+    .data-table-subtitle {
+        color: #718096;
+        font-size: 0.875rem;
+        margin: 0.25rem 0 0 0;
+    }
+    
+    .table {
+        margin: 0;
+    }
+    
+    .table th {
+        background: #f8f9fa;
+        border: none;
+        font-weight: 600;
+        color: #4a5568;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-size: 0.75rem;
+        padding: 1rem;
+    }
+    
+    .table td {
+        border: none;
+        padding: 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    /* Action Buttons */
+    .btn-admin {
+        border-radius: var(--border-radius-sm);
+        padding: 0.5rem 1rem;
+        font-weight: 600;
+        border: none;
+        transition: var(--transition);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .btn-admin::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+        transition: left 0.5s;
+    }
+    
+    .btn-admin:hover::before {
+        left: 100%;
+    }
+    
+    .btn-admin:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    }
+    
+    .btn-admin-primary {
+        background: var(--admin-primary);
+        color: white;
+    }
+    
+    .btn-admin-success {
+        background: var(--admin-success);
+        color: white;
+    }
+    
+    .btn-admin-warning {
+        background: var(--admin-warning);
+        color: white;
+    }
+    
+    .btn-admin-danger {
+        background: var(--admin-danger);
+        color: white;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+        .admin-header {
+            padding: 1.5rem;
+        }
+        
+        .stats-card {
+            margin-bottom: 1rem;
+        }
+        
+        .stats-number {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <!-- Admin Header -->
+    <div class="admin-header">
+        <div class="admin-header-content">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h1 class="display-4 mb-2 fw-bold">
+                        <i class="fas fa-crown me-3"></i>Admin Dashboard
+                    </h1>
+                    <p class="mb-0 fs-5 opacity-90">
+                        <i class="fas fa-chart-line me-2"></i>Manage your books library with powerful admin tools
+                    </p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <div class="d-flex flex-column align-items-end">
+                        <span class="badge bg-light text-dark fs-6 mb-2">
+                            <i class="fas fa-user-shield me-2"></i>Administrator
+                        </span>
+                        <small class="opacity-75">Full system access</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-5">
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card primary">
+                <div class="stats-icon primary">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div class="stats-number">{{ stats.total_books or 0 }}</div>
+                <div class="stats-label">Books</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card success">
+                <div class="stats-icon success">
+                    <i class="fas fa-user-edit"></i>
+                </div>
+                <div class="stats-number">{{ stats.total_authors or 0 }}</div>
+                <div class="stats-label">Authors</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card info">
+                <div class="stats-icon info">
+                    <i class="fas fa-tags"></i>
+                </div>
+                <div class="stats-number">{{ stats.total_categories or 0 }}</div>
+                <div class="stats-label">Categories</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card warning">
+                <div class="stats-icon warning">
+                    <i class="fas fa-globe"></i>
+                </div>
+                <div class="stats-number">{{ stats.total_languages or 0 }}</div>
+                <div class="stats-label">Languages</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card danger">
+                <div class="stats-icon danger">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stats-number">{{ stats.total_users or 0 }}</div>
+                <div class="stats-label">Users</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card primary">
+                <div class="stats-icon primary">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div class="stats-number">{{ stats.total_collections or 0 }}</div>
+                <div class="stats-label">Collections</div>
+            </div>
+        </div>
+        <div class="col-lg-2 col-md-4 col-sm-6 mb-4">
+            <div class="stats-card info">
+                <div class="stats-icon info">
+                    <i class="fas fa-image"></i>
+                </div>
+                <div class="stats-number">{{ stats.books_with_covers or 0 }}</div>
+                <div class="stats-label">Books with Covers</div>
+                <small class="text-muted">{{ "%.0f"|format(stats.cover_percentage or 0) }}% coverage</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- Management Tabs -->
+    <div class="data-table">
+        <div class="data-table-header">
+            <h3 class="data-table-title">
+                <i class="fas fa-cogs me-2"></i>Management Tools
+            </h3>
+            <p class="data-table-subtitle">Manage your library data and settings</p>
+        </div>
+        <div class="p-4">
+            <ul class="nav nav-pills nav-fill mb-4" id="adminTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="books-tab" data-bs-toggle="pill" data-bs-target="#books" type="button" role="tab">
+                        <i class="fas fa-book"></i> Books
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="authors-tab" data-bs-toggle="pill" data-bs-target="#authors" type="button" role="tab">
+                        <i class="fas fa-user-edit"></i> Authors
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="categories-tab" data-bs-toggle="pill" data-bs-target="#categories" type="button" role="tab">
+                        <i class="fas fa-tags"></i> Categories
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="languages-tab" data-bs-toggle="pill" data-bs-target="#languages" type="button" role="tab">
+                        <i class="fas fa-language"></i> Languages
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="users-tab" data-bs-toggle="pill" data-bs-target="#users" type="button" role="tab">
+                        <i class="fas fa-users"></i> Users
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="covers-tab" data-bs-toggle="pill" data-bs-target="#covers" type="button" role="tab">
+                        <i class="fas fa-image"></i> Covers
+                    </button>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="card-body">
+            <div class="tab-content" id="adminTabsContent">
+                <!-- Books Management -->
+                <div class="tab-pane fade show active" id="books" role="tabpanel" aria-labelledby="books-tab">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h4><i class="icon icon-book"></i> Books Management</h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-primary" onclick="openAddModal('book')">
+                                <i class="icon icon-plus"></i> Add Book
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-3">
+                            <input type="text" class="form-control" id="booksSearch" placeholder="Search books...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="booksFilter">
+                                <option value="">All Books</option>
+                                <option value="no_cover">Missing Covers</option>
+                                <option value="with_cover">With Covers</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="booksSortBy">
+                                <option value="title">Sort by Title</option>
+                                <option value="publication_year">Sort by Year</option>
+                                <option value="id">Sort by ID</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="booksOrder">
+                                <option value="asc">Ascending</option>
+                                <option value="desc">Descending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <select class="form-select" id="booksPerPage">
+                                <option value="10">10 per page</option>
+                                <option value="25" selected>25 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="booksPagination">
+                                    <!-- Pagination will be inserted here -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th class="text-center">Cover</th>
+                                    <th>Title</th>
+                                    <th>Authors</th>
+                                    <th>Year</th>
+                                    <th>Categories</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="booksTableBody">
+                                {% for book in books %}
+                                <tr data-id="{{ book.id }}">
+                                    <td class="text-center">
+                                        {% if book.cover_id %}
+                                            <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-S.jpg" alt="Cover" class="cover-image">
+                                        {% else %}
+                                            <div class="placeholder-cover">No Cover</div>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ book.title or 'Untitled' }}</strong></td>
+                                    <td>{{ book.authors|join(', ') if book.authors else 'No authors' }}</td>
+                                    <td>{{ book.publication_year or 'N/A' }}</td>
+                                    <td>{{ book.categories|join(', ') if book.categories else 'No categories' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="editEntity('book', {{ book.id }})">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteBook({{ book.id }}, &quot;{{ book.title|e }}&quot;)">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">No books found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="bookPagination" class="mt-3">
+                        <!-- Books pagination will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Authors Management -->
+                <div class="tab-pane fade" id="authors" role="tabpanel" aria-labelledby="authors-tab">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h4><i class="icon icon-user"></i> Authors Management</h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAuthorModal">
+                                <i class="icon icon-plus"></i> Add Author
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <input type="text" class="form-control" id="authorsSearch" placeholder="Search authors...">
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="authorsSortBy">
+                                <option value="name">Sort by Name</option>
+                                <option value="book_count">Sort by Book Count</option>
+                                <option value="id">Sort by ID</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" id="authorsOrder">
+                                <option value="asc">Ascending</option>
+                                <option value="desc">Descending</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <select class="form-select" id="authorsPerPage">
+                                <option value="10">10 per page</option>
+                                <option value="25" selected>25 per page</option>
+                                <option value="50">50 per page</option>
+                                <option value="100">100 per page</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <nav>
+                                <ul class="pagination pagination-sm mb-0" id="authorsPagination">
+                                    <!-- Pagination will be inserted here -->
+                                </ul>
+                            </nav>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Image</th>
+                                    <th>Name</th>
+                                    <th>Books Count</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="authorsTableBody">
+                                {% for author in authors %}
+                                <tr data-id="{{ author.id }}">
+                                    <td>
+                                        {% if author.image_url %}
+                                            <img src="{{ author.image_url }}" alt="Author" class="author-image">
+                                        {% else %}
+                                            <div class="placeholder-author">N/A</div>
+                                        {% endif %}
+                                    </td>
+                                    <td><strong>{{ author.name or 'Unknown' }}</strong></td>
+                                    <td>{{ author.book_count or 0 }} books</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="editEntity('author', {{ author.id }})">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteAuthor({{ author.id }}, &quot;{{ author.name|e }}&quot;)">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">No authors found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="authorPagination" class="mt-3">
+                        <!-- Authors pagination will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Categories Management -->
+                <div class="tab-pane fade" id="categories" role="tabpanel" aria-labelledby="categories-tab">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h4><i class="icon icon-tag"></i> Categories Management</h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+                                <i class="icon icon-plus"></i> Add Category
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <input type="text" class="form-control" id="categoriesSearch" placeholder="Search categories...">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Books Count</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="categoriesTableBody">
+                                {% for category in categories %}
+                                <tr data-id="{{ category.id }}">
+                                    <td><strong>{{ category.name or 'Unknown' }}</strong></td>
+                                    <td>{{ category.book_count or 0 }} books</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="editEntity('category', {{ category.id }})">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteCategory({{ category.id }}, &quot;{{ category.name|e }}&quot;)">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">No categories found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="categoryPagination" class="mt-3">
+                        <!-- Categories pagination will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Languages Management -->
+                <div class="tab-pane fade" id="languages" role="tabpanel" aria-labelledby="languages-tab">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h4><i class="icon icon-globe"></i> Languages Management</h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addLanguageModal">
+                                <i class="icon icon-plus"></i> Add Language
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <input type="text" class="form-control" id="languagesSearch" placeholder="Search languages...">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Books Count</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="languagesTableBody">
+                                {% for language in languages %}
+                                <tr data-id="{{ language.id }}">
+                                    <td><strong>{{ language.name or 'Unknown' }}</strong> {% if language.code %}({{ language.code }}){% endif %}</td>
+                                    <td>{{ language.book_count or 0 }} books</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="editEntity('language', {{ language.id }})">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteLanguage({{ language.id }}, &quot;{{ language.name|e }}&quot;)">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-muted">No languages found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="languagePagination" class="mt-3">
+                        <!-- Languages pagination will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Users Management -->
+                <div class="tab-pane fade" id="users" role="tabpanel" aria-labelledby="users-tab">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h4><i class="icon icon-users"></i> Users Management</h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+                                <i class="icon icon-plus"></i> Add User
+                            </button>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <input type="text" class="form-control" id="usersSearch" placeholder="Search users...">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Name</th>
+                                    <th>Email</th>
+                                    <th>Collections</th>
+                                    <th>Created</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                {% for user in users %}
+                                <tr data-id="{{ user.id }}">
+                                    <td><strong>{{ user.username or 'Unknown' }}</strong></td>
+                                    <td>{{ user.email or 'N/A' }}</td>
+                                    <td>{{ user.collection_count or 0 }} collections</td>
+                                    <td>{{ user.created_at.strftime('%Y-%m-%d') if user.created_at else 'N/A' }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary" onclick="editEntity('user', {{ user.id }})">
+                                                <i class="fas fa-edit"></i> Edit
+                                            </button>
+                                            <button class="btn btn-outline-danger" onclick="deleteUser({{ user.id }}, &quot;{{ user.username|e }}&quot;)">
+                                                <i class="fas fa-trash"></i> Delete
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4 text-muted">No users found</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="userPagination" class="mt-3">
+                        <!-- Users pagination will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Covers Management -->
+                <div class="tab-pane fade" id="covers" role="tabpanel" aria-labelledby="covers-tab">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <h4><i class="icon icon-image"></i> Cover Management</h4>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <button class="btn btn-success" onclick="updateAllCovers()">
+                                <i class="icon icon-refresh"></i> Update Missing Covers
+                            </button>
+                        </div>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="icon icon-info-circle"></i>
+                        <strong>Cover Statistics:</strong> 
+                        {{ stats.books_with_covers or 0 }} books have covers, 
+                        {{ stats.missing_covers or 0 }} are missing covers 
+                        ({{ "%.1f"|format(stats.cover_percentage or 0) }}% coverage)
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Authors</th>
+                                    <th>Current Cover</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="coversTableBody">
+                                <!-- Books without covers will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Universal Modal for Add/Edit -->
+<div class="modal fade" id="crudModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="crudModalTitle">Add/Edit Item</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="crudForm">
+                    <!-- Dynamic form content will be inserted here -->
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveBtn" onclick="saveEntity()">
+                    <i class="icon icon-check"></i> Save
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <div id="loadingMessage">Processing...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Book Modal -->
+<div class="modal fade" id="addBookModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookModalTitle">Add New Book</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <ul class="nav nav-pills mb-3" id="bookAddTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="manual-tab" data-bs-toggle="pill" data-bs-target="#manual" type="button" role="tab">
+                            <i class="fas fa-edit"></i> Manual Entry
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="import-tab" data-bs-toggle="pill" data-bs-target="#import" type="button" role="tab">
+                            <i class="fas fa-download"></i> Import from Open Library
+                        </button>
+                    </li>
+                </ul>
+                
+                <div class="tab-content" id="bookAddTabsContent">
+                    <!-- Manual Entry Tab -->
+                    <div class="tab-pane fade show active" id="manual" role="tabpanel">
+                        <form id="manualBookForm">
+                            <div class="row">
+                                <div class="col-md-8">
+                                    <div class="mb-3">
+                                        <label for="bookTitle" class="form-label">Title *</label>
+                                        <input type="text" class="form-control" id="bookTitle" required>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        <label for="bookYear" class="form-label">Publication Year</label>
+                                        <input type="number" class="form-control" id="bookYear" min="1000" max="2030">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="bookAuthors" class="form-label">Authors</label>
+                                        <select class="form-select" id="bookAuthors" multiple>
+                                            <option value="" disabled>Loading authors...</option>
+                                        </select>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control form-control-sm" id="newAuthor" placeholder="Add new author">
+                                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="addNewAuthor()">+ Add Author</button>
+                                        </div>
+                                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple authors</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="bookCategories" class="form-label">Categories</label>
+                                        <select class="form-select" id="bookCategories" multiple>
+                                            <option value="" disabled>Loading categories...</option>
+                                        </select>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control form-control-sm" id="newCategory" placeholder="Add new category">
+                                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="addNewCategory()">+ Add Category</button>
+                                        </div>
+                                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple categories</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="bookLanguages" class="form-label">Languages</label>
+                                        <select class="form-select" id="bookLanguages" multiple>
+                                            <option value="" disabled>Loading languages...</option>
+                                        </select>
+                                        <div class="mt-2">
+                                            <input type="text" class="form-control form-control-sm" id="newLanguage" placeholder="Add new language">
+                                            <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="addNewLanguage()">+ Add Language</button>
+                                        </div>
+                                        <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple languages</small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="bookCoverId" class="form-label">Cover ID</label>
+                                        <input type="text" class="form-control" id="bookCoverId" placeholder="Open Library cover ID">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="bookOpenLibraryId" class="form-label">Open Library ID</label>
+                                <input type="text" class="form-control" id="bookOpenLibraryId" placeholder="e.g., OL7353617M">
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <!-- Import from Open Library Tab -->
+                    <div class="tab-pane fade" id="import" role="tabpanel">
+                        <div class="mb-3">
+                            <label for="searchTitle" class="form-label">Search by Title</label>
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="searchTitle" placeholder="Enter book title to search...">
+                                <button class="btn btn-outline-primary" type="button" onclick="searchOpenLibrary()">
+                                    <i class="fas fa-search"></i> Search
+                                </button>
+                            </div>
+                        </div>
+                        <div id="searchResults" class="mt-3" style="display: none;">
+                            <h6>Search Results:</h6>
+                            <div id="searchResultsContent">
+                                <!-- Search results will be displayed here -->
+                            </div>
+                        </div>
+                        <div id="importProgress" class="text-center mt-3" style="display: none;">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Searching...</span>
+                            </div>
+                            <p class="mt-2">Searching Open Library...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveBookBtn" onclick="saveBook()">
+                    <i class="fas fa-save"></i> <span id="saveBookBtnText">Add Book</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Book Modal -->
+<div class="modal fade" id="editBookModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Book</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editBookForm">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="editBookTitle" class="form-label">Title (optional - leave empty to keep current title)</label>
+                                <input type="text" class="form-control" id="editBookTitle">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="editBookYear" class="form-label">Publication Year</label>
+                                <input type="number" class="form-control" id="editBookYear" min="1000" max="2030">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editBookAuthors" class="form-label">Authors</label>
+                                <select class="form-select" id="editBookAuthors" multiple>
+                                    <option value="" disabled>Loading authors...</option>
+                                </select>
+                                <div class="mt-2">
+                                    <input type="text" class="form-control form-control-sm" id="editNewAuthor" placeholder="Add new author">
+                                    <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="addNewAuthorToEdit()">+ Add Author</button>
+                                </div>
+                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple authors</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editBookCategories" class="form-label">Categories</label>
+                                <select class="form-select" id="editBookCategories" multiple>
+                                    <option value="" disabled>Loading categories...</option>
+                                </select>
+                                <div class="mt-2">
+                                    <input type="text" class="form-control form-control-sm" id="editNewCategory" placeholder="Add new category">
+                                    <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="addNewCategoryToEdit()">+ Add Category</button>
+                                </div>
+                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple categories</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editBookLanguages" class="form-label">Languages</label>
+                                <select class="form-select" id="editBookLanguages" multiple>
+                                    <option value="" disabled>Loading languages...</option>
+                                </select>
+                                <div class="mt-2">
+                                    <input type="text" class="form-control form-control-sm" id="editNewLanguage" placeholder="Add new language">
+                                    <button type="button" class="btn btn-sm btn-outline-primary mt-1" onclick="addNewLanguageToEdit()">+ Add Language</button>
+                                </div>
+                                <small class="form-text text-muted">Hold Ctrl/Cmd to select multiple languages</small>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editBookCoverId" class="form-label">Cover ID</label>
+                                <input type="text" class="form-control" id="editBookCoverId" placeholder="Open Library cover ID">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editBookOpenLibraryId" class="form-label">Open Library ID</label>
+                        <input type="text" class="form-control" id="editBookOpenLibraryId" placeholder="e.g., OL7353617M">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditBookBtn" onclick="saveEditBook()">
+                    <i class="fas fa-save"></i> Update Book
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Author Modal -->
+<div class="modal fade" id="addAuthorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Author</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="authorForm">
+                    <div class="mb-3">
+                        <label for="authorName" class="form-label">Author Name *</label>
+                        <input type="text" class="form-control" id="authorName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="authorImage" class="form-label">Image URL (Optional)</label>
+                        <input type="url" class="form-control" id="authorImage" placeholder="https://example.com/author-image.jpg">
+                        <div class="form-text">Leave empty if no image is available</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveAuthor()">
+                    <i class="fas fa-save"></i> Add Author
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="categoryForm">
+                    <div class="mb-3">
+                        <label for="categoryName" class="form-label">Category Name *</label>
+                        <input type="text" class="form-control" id="categoryName" required>
+                        <div class="form-text">Examples: Fiction, Science Fiction, Biography, Romance, Mystery</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveCategory()">
+                    <i class="fas fa-save"></i> Add Category
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Language Modal -->
+<div class="modal fade" id="addLanguageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New Language</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="languageForm">
+                    <div class="mb-3">
+                        <label for="languageName" class="form-label">Language Name *</label>
+                        <input type="text" class="form-control" id="languageName" required>
+                        <div class="form-text">Examples: English, Spanish, French, German, Italian</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveLanguage()">
+                    <i class="fas fa-save"></i> Add Language
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add User Modal -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Add New User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="userForm">
+                    <div class="mb-3">
+                        <label for="userName" class="form-label">Username *</label>
+                        <input type="text" class="form-control" id="userName" required>
+                        <div class="form-text">Must be unique</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userEmail" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="userEmail" required>
+                        <div class="form-text">Must be a valid email address</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userRole" class="form-label">Role</label>
+                        <select class="form-select" id="userRole">
+                            <option value="user">Normal User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <div class="form-text">Set user role (admin or normal user)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userPassword" class="form-label">Password *</label>
+                        <input type="password" class="form-control" id="userPassword" required>
+                        <div class="form-text">Minimum 6 characters recommended</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="userPasswordConfirm" class="form-label">Confirm Password *</label>
+                        <input type="password" class="form-control" id="userPasswordConfirm" required>
+                        <div class="form-text">Must match the password above</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveUser()">
+                    <i class="fas fa-save"></i> Add User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Author Modal -->
+<div class="modal fade" id="editAuthorModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Author</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editAuthorForm">
+                    <div class="mb-3">
+                        <label for="editAuthorName" class="form-label">Author Name *</label>
+                        <input type="text" class="form-control" id="editAuthorName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editAuthorImage" class="form-label">Image URL (Optional)</label>
+                        <input type="url" class="form-control" id="editAuthorImage" placeholder="https://example.com/author-image.jpg">
+                        <div class="form-text">Leave empty if no image is available</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditAuthorBtn" onclick="saveEditAuthor()">
+                    <i class="fas fa-save"></i> Update Author
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Category</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editCategoryForm">
+                    <div class="mb-3">
+                        <label for="editCategoryName" class="form-label">Category Name *</label>
+                        <input type="text" class="form-control" id="editCategoryName" required>
+                        <div class="form-text">Examples: Fiction, Science Fiction, Biography, Romance, Mystery</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditCategoryBtn" onclick="saveEditCategory()">
+                    <i class="fas fa-save"></i> Update Category
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Language Modal -->
+<div class="modal fade" id="editLanguageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit Language</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editLanguageForm">
+                    <div class="mb-3">
+                        <label for="editLanguageName" class="form-label">Language Name *</label>
+                        <input type="text" class="form-control" id="editLanguageName" required>
+                        <div class="form-text">Examples: English, Spanish, French, German, Italian</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditLanguageBtn" onclick="saveEditLanguage()">
+                    <i class="fas fa-save"></i> Update Language
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit User Modal -->
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Edit User</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editUserForm">
+                    <div class="mb-3">
+                        <label for="editUserName" class="form-label">Username *</label>
+                        <input type="text" class="form-control" id="editUserName" required>
+                        <div class="form-text">Must be unique</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserEmail" class="form-label">Email *</label>
+                        <input type="email" class="form-control" id="editUserEmail" required>
+                        <div class="form-text">Must be a valid email address</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserRole" class="form-label">Role</label>
+                        <select class="form-select" id="editUserRole">
+                            <option value="user">Normal User</option>
+                            <option value="admin">Admin</option>
+                        </select>
+                        <div class="form-text">Set user role (admin or normal user)</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserPassword" class="form-label">Password (leave empty to keep current)</label>
+                        <input type="password" class="form-control" id="editUserPassword">
+                        <div class="form-text">Leave empty to keep current password, or enter new password</div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editUserPasswordConfirm" class="form-label">Confirm Password</label>
+                        <input type="password" class="form-control" id="editUserPasswordConfirm">
+                        <div class="form-text">Must match the password above if changing password</div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" id="saveEditUserBtn" onclick="saveEditUser()">
+                    <i class="fas fa-save"></i> Update User
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+    <div id="alertToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+        <div class="toast-header">
+            <strong class="me-auto" id="toastTitle">Notification</strong>
+            <button type="button" class="btn-close" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div class="toast-body" id="toastMessage">
+            <!-- Alert message will be inserted here -->
+        </div>
+    </div>
+</div>
+
+<style>
+/* Table Improvements */
+.table {
+    margin-bottom: 1.5rem;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    padding: 1rem 0.75rem;
+    background-color: #f8f9fa;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: #495057;
+}
+
+.table td {
+    padding: 0.875rem 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+    background-color: rgba(0, 0, 0, 0.025);
+}
+
+.table-striped tbody tr:hover {
+    background-color: rgba(0, 123, 255, 0.075);
+    transition: background-color 0.15s ease-in-out;
+}
+
+/* Navigation Pills Improvements */
+.nav-pills .nav-link {
+    border-radius: 20px;
+    margin-right: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+    color: #6c757d;
+    border: 1px solid transparent;
+}
+
+.nav-pills .nav-link:hover {
+    background-color: rgba(0, 123, 255, 0.1);
+    color: #0d6efd;
+    border-color: rgba(0, 123, 255, 0.2);
+}
+
+.nav-pills .nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-color: transparent;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.nav-pills .nav-link i {
+    margin-right: 0.5rem;
+    font-size: 0.9rem;
+}
+
+/* Card Improvements */
+.card {
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    border: none;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #fff;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.25rem 1.5rem;
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+/* Button Improvements */
+.btn {
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-group-sm > .btn, .btn-sm {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.775rem;
+}
+
+/* Form Improvements */
+.form-control, .form-select {
+    border-radius: 8px;
+    padding: 0.5rem 0.75rem;
+}
+
+.cover-image {
+    width: 40px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.author-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.placeholder-cover, .placeholder-author {
+    width: 40px;
+    height: 50px;
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    color: #6c757d;
+}
+
+.placeholder-author {
+    height: 40px;
+    border-radius: 50%;
+}
+
+/* Responsive Table Improvements */
+.table-responsive {
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+    .table td, .table th {
+        padding: 0.5rem 0.4rem;
+        font-size: 0.875rem;
+    }
+    
+    .nav-pills .nav-link {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.875rem;
+        margin-right: 4px;
+    }
+    
+    .nav-pills .nav-link i {
+        margin-right: 0.25rem;
+    }
+}
+
+/* Action Buttons Improvements */
+.btn-group .btn {
+    margin: 0 1px;
+}
+
+.btn-outline-primary:hover, .btn-outline-danger:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+/* Loading and Empty States */
+.text-center.py-4 {
+    padding: 2rem 1rem !important;
+    color: #6c757d;
+}
+
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+}
+
+/* Statistics Cards Improvements */
+.bg-primary, .bg-success, .bg-info, .bg-warning, .bg-secondary, .bg-dark {
+    background: linear-gradient(135deg, var(--bs-primary) 0%, var(--bs-primary-rgb) 100%) !important;
+}
+
+.bg-success {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%) !important;
+}
+
+.bg-info {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%) !important;
+}
+
+.bg-warning {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%) !important;
+}
+
+.bg-secondary {
+    background: linear-gradient(135deg, #6c757d 0%, #495057 100%) !important;
+}
+
+.bg-dark {
+    background: linear-gradient(135deg, #343a40 0%, #212529 100%) !important;
+}
+</style>
+
+<script>
+// Add Book Modal Functions
+async function openAddModal(type) {
+    if (type === 'book') {
+        // Reset form first
+        document.getElementById('manualBookForm').reset();
+        document.getElementById('searchTitle').value = '';
+        document.getElementById('searchResults').style.display = 'none';
+        
+        // Load dropdown options for add modal
+        await loadDropdownOptions();
+        
+        const modal = new bootstrap.Modal(document.getElementById('addBookModal'));
+        modal.show();
+    }
+}
+
+// Search Open Library for books
+async function searchOpenLibrary() {
+    const searchTitle = document.getElementById('searchTitle').value.trim();
+    if (!searchTitle) {
+        showToast('Error', 'Please enter a book title to search', 'error');
+        return;
+    }
+
+    const progressDiv = document.getElementById('importProgress');
+    const resultsDiv = document.getElementById('searchResults');
+    const resultsContent = document.getElementById('searchResultsContent');
+    
+    // Show loading
+    progressDiv.style.display = 'block';
+    resultsDiv.style.display = 'none';
+    resultsContent.innerHTML = '';
+
+    try {
+        const response = await fetch(`/api/books/search/${encodeURIComponent(searchTitle)}?limit=5`);
+        const data = await response.json();
+
+        progressDiv.style.display = 'none';
+
+        if (response.ok && (Array.isArray(data) ? data.length > 0 : data)) {
+            // Handle both single book and multiple books response
+            const books = Array.isArray(data) ? data : [data];
+            
+            // Display search results
+            resultsContent.innerHTML = books.map((book, index) => `
+                <div class="card mb-2">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col-md-2 text-center">
+                                ${book.cover_id ? 
+                                    `<img src="https://covers.openlibrary.org/b/id/${book.cover_id}-S.jpg" class="img-fluid" style="max-height: 80px;">` :
+                                    '<div class="placeholder-cover" style="height: 80px; width: 60px; margin: 0 auto;">No Cover</div>'
+                                }
+                            </div>
+                            <div class="col-md-8">
+                                <h6 class="mb-1">${book.title}</h6>
+                                <p class="mb-1"><strong>Author:</strong> ${book.authors ? book.authors.join(', ') : 'Unknown'}</p>
+                                <p class="mb-1"><strong>Year:</strong> ${book.publication_year || 'Unknown'}</p>
+                                <p class="mb-0"><strong>Categories:</strong> ${book.categories ? book.categories.join(', ') : 'Unknown'}</p>
+                            </div>
+                            <div class="col-md-2 text-center">
+                                <button class="btn btn-success btn-sm" onclick="importBookFromSearch(${index})">
+                                    <i class="fas fa-download"></i> Import
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+            
+            // Store search results for import
+            window.searchResults = books;
+            resultsDiv.style.display = 'block';
+        } else {
+            resultsContent.innerHTML = '<div class="alert alert-info">No books found. Try a different search term.</div>';
+            resultsDiv.style.display = 'block';
+        }
+    } catch (error) {
+        progressDiv.style.display = 'none';
+        showToast('Error', 'Failed to search Open Library. Please try again.', 'error');
+        console.error('Search error:', error);
+    }
+}
+
+// Import selected book from search results
+async function importBookFromSearch(index) {
+    const book = window.searchResults[index];
+    const bookTitle = book.title;
+
+    try {
+        const response = await fetch(`/api/books/import/${encodeURIComponent(bookTitle)}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('Success', `Book "${bookTitle}" imported successfully!`, 'success');
+            // Close modal and refresh page to show new book
+            bootstrap.Modal.getInstance(document.getElementById('addBookModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.error || 'Failed to import book', 'error');
+        }
+    } catch (error) {
+        showToast('Error', 'Failed to import book. Please try again.', 'error');
+        console.error('Import error:', error);
+    }
+}
+
+// Load dropdown options
+async function loadDropdownOptions() {
+    try {
+        // Load authors - returns direct array
+        const authorsResponse = await fetch('/api/authors/');
+        if (authorsResponse.ok) {
+            const authors = await authorsResponse.json();
+            const authorsSelect = document.getElementById('bookAuthors');
+            authorsSelect.innerHTML = '';
+            if (Array.isArray(authors)) {
+                authors.forEach(author => {
+                    const option = document.createElement('option');
+                    option.value = author.name;
+                    option.textContent = author.name;
+                    authorsSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Load categories - returns paginated response with data property
+        const categoriesResponse = await fetch('/api/categories/?per_page=100');
+        if (categoriesResponse.ok) {
+            const categoriesData = await categoriesResponse.json();
+            const categoriesSelect = document.getElementById('bookCategories');
+            categoriesSelect.innerHTML = '';
+            // Handle paginated response format
+            const categories = categoriesData.data || categoriesData;
+            if (Array.isArray(categories) && categories.length > 0) {
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.name;
+                    option.textContent = category.name;
+                    categoriesSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Load languages - returns paginated response with data property
+        const languagesResponse = await fetch('/api/languages/?per_page=100');
+        if (languagesResponse.ok) {
+            const languagesData = await languagesResponse.json();
+            const languagesSelect = document.getElementById('bookLanguages');
+            languagesSelect.innerHTML = '';
+            // Handle paginated response format
+            const languages = languagesData.data || languagesData;
+            if (Array.isArray(languages) && languages.length > 0) {
+                languages.forEach(language => {
+                    const option = document.createElement('option');
+                    option.value = language.name;
+                    option.textContent = language.name;
+                    languagesSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading dropdown options:', error);
+    }
+}
+
+// Add new author
+async function addNewAuthor() {
+    const newAuthor = document.getElementById('newAuthor').value.trim();
+    if (!newAuthor) {
+        showToast('Error', 'Please enter an author name', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/authors', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newAuthor })
+        });
+
+        if (response.ok) {
+            const authorsSelect = document.getElementById('bookAuthors');
+            const option = document.createElement('option');
+            option.value = newAuthor;
+            option.textContent = newAuthor;
+            option.selected = true;
+            authorsSelect.appendChild(option);
+            document.getElementById('newAuthor').value = '';
+            showToast('Success', 'Author added successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error adding author:', error);
+    }
+}
+
+// Add new category
+async function addNewCategory() {
+    const newCategory = document.getElementById('newCategory').value.trim();
+    if (!newCategory) {
+        showToast('Error', 'Please enter a category name', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/categories/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newCategory })
+        });
+
+        if (response.ok) {
+            const categoriesSelect = document.getElementById('bookCategories');
+            const option = document.createElement('option');
+            option.value = newCategory;
+            option.textContent = newCategory;
+            option.selected = true;
+            categoriesSelect.appendChild(option);
+            document.getElementById('newCategory').value = '';
+            showToast('Success', 'Category added successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error adding category:', error);
+    }
+}
+
+// Add new language
+async function addNewLanguage() {
+    const newLanguage = document.getElementById('newLanguage').value.trim();
+    if (!newLanguage) {
+        showToast('Error', 'Please enter a language name', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/languages/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newLanguage })
+        });
+
+        if (response.ok) {
+            const languagesSelect = document.getElementById('bookLanguages');
+            const option = document.createElement('option');
+            option.value = newLanguage;
+            option.textContent = newLanguage;
+            option.selected = true;
+            languagesSelect.appendChild(option);
+            document.getElementById('newLanguage').value = '';
+            showToast('Success', 'Language added successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error adding language:', error);
+    }
+}
+
+// Edit entity function
+async function editEntity(entityType, entityId) {
+    if (entityType === 'book') {
+        await openEditBookModal(entityId);
+    } else if (entityType === 'author') {
+        await openEditAuthorModal(entityId);
+    } else if (entityType === 'category') {
+        await openEditCategoryModal(entityId);
+    } else if (entityType === 'language') {
+        await openEditLanguageModal(entityId);
+    } else if (entityType === 'user') {
+        await openEditUserModal(entityId);
+    } else {
+        showToast('Info', `Edit functionality for ${entityType} is not yet implemented`);
+    }
+}
+
+// Reset modal for add mode
+function resetBookModal() {
+    // Clear form fields
+    document.getElementById('bookTitle').value = '';
+    document.getElementById('bookYear').value = '';
+    document.getElementById('bookCoverId').value = '';
+    document.getElementById('bookOpenLibraryId').value = '';
+    
+    // Clear selections (but don't reset the options themselves)
+    const authorsSelect = document.getElementById('bookAuthors');
+    const categoriesSelect = document.getElementById('bookCategories');
+    const languagesSelect = document.getElementById('bookLanguages');
+    
+    if (authorsSelect) authorsSelect.selectedIndex = -1;
+    if (categoriesSelect) categoriesSelect.selectedIndex = -1;
+    if (languagesSelect) languagesSelect.selectedIndex = -1;
+}
+
+// Save book manually (add only)
+async function saveBook() {
+    // Get selected values from dropdowns
+    const selectedAuthors = Array.from(document.getElementById('bookAuthors').selectedOptions).map(option => option.value);
+    const selectedCategories = Array.from(document.getElementById('bookCategories').selectedOptions).map(option => option.value);
+    const selectedLanguages = Array.from(document.getElementById('bookLanguages').selectedOptions).map(option => option.value);
+    
+    // Get form values
+    const title = document.getElementById('bookTitle').value.trim();
+    
+    if (!title) {
+        showToast('Error', 'Book title is required for new books', 'error');
+        return;
+    }
+    
+    const bookData = {
+        title: title,
+        publication_year: document.getElementById('bookYear').value ? parseInt(document.getElementById('bookYear').value) : null,
+        authors: selectedAuthors,
+        categories: selectedCategories,
+        languages: selectedLanguages,
+        cover_id: document.getElementById('bookCoverId').value.trim() || null,
+        open_library_id: document.getElementById('bookOpenLibraryId').value.trim() || null
+    };
+
+    // Convert to single author for API compatibility
+    if (selectedAuthors.length > 0) {
+        bookData.author = selectedAuthors[0];
+    }
+
+    try {
+        const response = await fetch('/api/books', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bookData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('Success', `Book "${bookData.title}" added successfully!`, 'success');
+            // Close modal and refresh page
+            bootstrap.Modal.getInstance(document.getElementById('addBookModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.error || 'Failed to add book', 'error');
+        }
+    } catch (error) {
+        showToast('Error', 'Failed to add book. Please try again.', 'error');
+        console.error('Save error:', error);
+    }
+}
+
+// Save Author function
+async function saveAuthor() {
+    const name = document.getElementById('authorName').value.trim();
+    
+    if (!name) {
+        showToast('Error', 'Author name is required', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/authors/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name,
+                image: document.getElementById('authorImage').value.trim() || null
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('Success', 'Author added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('addAuthorModal')).hide();
+            document.getElementById('authorForm').reset();
+            // Reload page to update author list
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.error || 'Failed to add author', 'error');
+        }
+    } catch (error) {
+        showToast('Error', 'Network error occurred', 'error');
+        console.error('Error:', error);
+    }
+}
+
+// Save Category function
+async function saveCategory() {
+    const name = document.getElementById('categoryName').value.trim();
+    
+    if (!name) {
+        showToast('Error', 'Category name is required', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/categories/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('Success', 'Category added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('addCategoryModal')).hide();
+            document.getElementById('categoryForm').reset();
+            // Reload page to update category list
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.error || 'Failed to add category', 'error');
+        }
+    } catch (error) {
+        showToast('Error', 'Network error occurred', 'error');
+        console.error('Error:', error);
+    }
+}
+
+// Save Language function
+async function saveLanguage() {
+    const name = document.getElementById('languageName').value.trim();
+    
+    if (!name) {
+        showToast('Error', 'Language name is required', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/languages/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: name
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('Success', 'Language added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('addLanguageModal')).hide();
+            document.getElementById('languageForm').reset();
+            // Reload page to update language list
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.error || 'Failed to add language', 'error');
+        }
+    } catch (error) {
+        showToast('Error', 'Network error occurred', 'error');
+        console.error('Error:', error);
+    }
+}
+
+// Save User function
+async function saveUser() {
+    const username = document.getElementById('userName').value.trim();
+    const email = document.getElementById('userEmail').value.trim();
+    const password = document.getElementById('userPassword').value;
+    const passwordConfirm = document.getElementById('userPasswordConfirm').value;
+    const role = document.getElementById('userRole') ? document.getElementById('userRole').value : 'user';
+    
+    // Validation
+    if (!username || !email || !password || !passwordConfirm) {
+        showToast('Error', 'All fields are required', 'error');
+        return;
+    }
+
+    if (!email.includes('@')) {
+        showToast('Error', 'Please enter a valid email address', 'error');
+        return;
+    }
+
+    if (password.length < 6) {
+        showToast('Error', 'Password must be at least 6 characters long', 'error');
+        return;
+    }
+
+    if (password !== passwordConfirm) {
+        showToast('Error', 'Passwords do not match', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/users', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: username,
+                email: email,
+                password: password,
+                role: role
+            })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('Success', 'User added successfully');
+            bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
+            document.getElementById('userForm').reset();
+            // Reload page to update user list
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.error || 'Failed to add user', 'error');
+        }
+    } catch (error) {
+        showToast('Error', 'Network error occurred', 'error');
+        console.error('Error:', error);
+    }
+}
+
+// Load dropdown options for edit modal
+async function loadEditDropdownOptions() {
+    try {
+        // Load authors
+        const authorsResponse = await fetch('/api/authors/');
+        if (authorsResponse.ok) {
+            const authors = await authorsResponse.json();
+            const authorsSelect = document.getElementById('editBookAuthors');
+            authorsSelect.innerHTML = '';
+            if (Array.isArray(authors)) {
+                authors.forEach(author => {
+                    const option = document.createElement('option');
+                    option.value = author.name;
+                    option.textContent = author.name;
+                    authorsSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Load categories
+        const categoriesResponse = await fetch('/api/categories/?per_page=100');
+        if (categoriesResponse.ok) {
+            const categoriesData = await categoriesResponse.json();
+            const categoriesSelect = document.getElementById('editBookCategories');
+            categoriesSelect.innerHTML = '';
+            const categories = categoriesData.data || categoriesData;
+            if (Array.isArray(categories) && categories.length > 0) {
+                categories.forEach(category => {
+                    const option = document.createElement('option');
+                    option.value = category.name;
+                    option.textContent = category.name;
+                    categoriesSelect.appendChild(option);
+                });
+            }
+        }
+
+        // Load languages
+        const languagesResponse = await fetch('/api/languages/?per_page=100');
+        if (languagesResponse.ok) {
+            const languagesData = await languagesResponse.json();
+            const languagesSelect = document.getElementById('editBookLanguages');
+            languagesSelect.innerHTML = '';
+            const languages = languagesData.data || languagesData;
+            if (Array.isArray(languages) && languages.length > 0) {
+                languages.forEach(language => {
+                    const option = document.createElement('option');
+                    option.value = language.name;
+                    option.textContent = language.name;
+                    languagesSelect.appendChild(option);
+                });
+            }
+        }
+    } catch (error) {
+        console.error('Error loading edit dropdown options:', error);
+    }
+}
+
+// Open edit modal with book data
+async function openEditBookModal(bookId) {
+    try {
+        // Load dropdown options first
+        await loadEditDropdownOptions();
+        
+        // Fetch book data
+        const response = await fetch(`/api/books/${bookId}`);
+        if (response.ok) {
+            const book = await response.json();
+            
+            // Populate form fields with current values
+            document.getElementById('editBookTitle').value = book.title || '';
+            document.getElementById('editBookTitle').placeholder = book.title || 'Enter new title';
+            document.getElementById('editBookYear').value = book.publication_year || '';
+            document.getElementById('editBookCoverId').value = book.cover_id || '';
+            document.getElementById('editBookOpenLibraryId').value = book.open_library_id || '';
+            
+            // Select current authors, categories, and languages
+            if (book.authors) {
+                const authorsSelect = document.getElementById('editBookAuthors');
+                Array.from(authorsSelect.options).forEach(option => {
+                    option.selected = book.authors.includes(option.value);
+                });
+            }
+            
+            if (book.categories) {
+                const categoriesSelect = document.getElementById('editBookCategories');
+                Array.from(categoriesSelect.options).forEach(option => {
+                    option.selected = book.categories.includes(option.value);
+                });
+            }
+            
+            if (book.languages) {
+                const languagesSelect = document.getElementById('editBookLanguages');
+                Array.from(languagesSelect.options).forEach(option => {
+                    option.selected = book.languages.includes(option.value);
+                });
+            }
+            
+            // Store book ID and original data
+            document.getElementById('saveEditBookBtn').setAttribute('data-book-id', bookId);
+            document.getElementById('saveEditBookBtn').setAttribute('data-original-title', book.title);
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('editBookModal'));
+            modal.show();
+        } else {
+            showToast('Error', 'Failed to load book data', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading book data:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+// Save edited book
+async function saveEditBook() {
+    const saveBtn = document.getElementById('saveEditBookBtn');
+    const bookId = saveBtn.getAttribute('data-book-id');
+    const originalTitle = saveBtn.getAttribute('data-original-title');
+    
+    // Get selected values from dropdowns
+    const selectedAuthors = Array.from(document.getElementById('editBookAuthors').selectedOptions).map(option => option.value);
+    const selectedCategories = Array.from(document.getElementById('editBookCategories').selectedOptions).map(option => option.value);
+    const selectedLanguages = Array.from(document.getElementById('editBookLanguages').selectedOptions).map(option => option.value);
+    
+    // Get form values
+    const title = document.getElementById('editBookTitle').value.trim();
+    const bookData = {
+        title: title || originalTitle, // Use new title if provided, otherwise keep original
+        publication_year: document.getElementById('editBookYear').value ? parseInt(document.getElementById('editBookYear').value) : null,
+        authors: selectedAuthors,
+        categories: selectedCategories,
+        languages: selectedLanguages,
+        cover_id: document.getElementById('editBookCoverId').value.trim() || null,
+        open_library_id: document.getElementById('editBookOpenLibraryId').value.trim() || null
+    };
+
+    // Convert to single author for API compatibility
+    if (selectedAuthors.length > 0) {
+        bookData.author = selectedAuthors[0];
+    }
+
+    try {
+        const response = await fetch(`/api/books/${bookId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(bookData)
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            showToast('Success', `Book "${bookData.title}" updated successfully!`, 'success');
+            // Close modal and refresh page
+            bootstrap.Modal.getInstance(document.getElementById('editBookModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            showToast('Error', data.error || 'Failed to update book', 'error');
+        }
+    } catch (error) {
+        showToast('Error', 'Failed to update book. Please try again.', 'error');
+        console.error('Update error:', error);
+    }
+}
+
+// Add new author in edit modal
+async function addNewAuthorToEdit() {
+    const newAuthor = document.getElementById('editNewAuthor').value.trim();
+    if (!newAuthor) {
+        showToast('Error', 'Please enter an author name', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/authors/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newAuthor })
+        });
+
+        if (response.ok) {
+            const authorsSelect = document.getElementById('editBookAuthors');
+            const option = document.createElement('option');
+            option.value = newAuthor;
+            option.textContent = newAuthor;
+            option.selected = true;
+            authorsSelect.appendChild(option);
+            document.getElementById('editNewAuthor').value = '';
+            showToast('Success', 'Author added successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error adding author:', error);
+    }
+}
+
+// Add new category in edit modal
+async function addNewCategoryToEdit() {
+    const newCategory = document.getElementById('editNewCategory').value.trim();
+    if (!newCategory) {
+        showToast('Error', 'Please enter a category name', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/categories/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newCategory })
+        });
+
+        if (response.ok) {
+            const categoriesSelect = document.getElementById('editBookCategories');
+            const option = document.createElement('option');
+            option.value = newCategory;
+            option.textContent = newCategory;
+            option.selected = true;
+            categoriesSelect.appendChild(option);
+            document.getElementById('editNewCategory').value = '';
+            showToast('Success', 'Category added successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error adding category:', error);
+    }
+}
+
+// Add new language in edit modal
+async function addNewLanguageToEdit() {
+    const newLanguage = document.getElementById('editNewLanguage').value.trim();
+    if (!newLanguage) {
+        showToast('Error', 'Please enter a language name', 'error');
+        return;
+    }
+
+    try {
+        const response = await fetch('/api/languages/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newLanguage })
+        });
+
+        if (response.ok) {
+            const languagesSelect = document.getElementById('editBookLanguages');
+            const option = document.createElement('option');
+            option.value = newLanguage;
+            option.textContent = newLanguage;
+            option.selected = true;
+            languagesSelect.appendChild(option);
+            document.getElementById('editNewLanguage').value = '';
+            showToast('Success', 'Language added successfully', 'success');
+        }
+    } catch (error) {
+        console.error('Error adding language:', error);
+    }
+}
+
+// Edit Author Modal Functions
+async function openEditAuthorModal(authorId) {
+    try {
+        const response = await fetch(`/api/authors/${authorId}`);
+        if (response.ok) {
+            const author = await response.json();
+            
+            document.getElementById('editAuthorName').value = author.name || '';
+            document.getElementById('editAuthorImage').value = author.image_url || '';
+            
+            document.getElementById('saveEditAuthorBtn').setAttribute('data-author-id', authorId);
+            
+            const modal = new bootstrap.Modal(document.getElementById('editAuthorModal'));
+            modal.show();
+        } else {
+            showToast('Error', 'Failed to load author data', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading author data:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+async function saveEditAuthor() {
+    const saveBtn = document.getElementById('saveEditAuthorBtn');
+    const authorId = saveBtn.getAttribute('data-author-id');
+    
+    const name = document.getElementById('editAuthorName').value.trim();
+    if (!name) {
+        showToast('Error', 'Author name is required', 'error');
+        return;
+    }
+    
+    const authorData = {
+        name: name,
+        image: document.getElementById('editAuthorImage').value.trim() || null
+    };
+
+    try {
+        const response = await fetch(`/api/authors/update/${authorId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(authorData)
+        });
+
+        if (response.ok) {
+            showToast('Success', 'Author updated successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editAuthorModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to update author', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating author:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+// Edit Category Modal Functions
+async function openEditCategoryModal(categoryId) {
+    try {
+        const response = await fetch(`/api/categories/${categoryId}`);
+        if (response.ok) {
+            const category = await response.json();
+            
+            document.getElementById('editCategoryName').value = category.name || '';
+            
+            document.getElementById('saveEditCategoryBtn').setAttribute('data-category-id', categoryId);
+            
+            const modal = new bootstrap.Modal(document.getElementById('editCategoryModal'));
+            modal.show();
+        } else {
+            showToast('Error', 'Failed to load category data', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading category data:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+async function saveEditCategory() {
+    const saveBtn = document.getElementById('saveEditCategoryBtn');
+    const categoryId = saveBtn.getAttribute('data-category-id');
+    
+    const name = document.getElementById('editCategoryName').value.trim();
+    if (!name) {
+        showToast('Error', 'Category name is required', 'error');
+        return;
+    }
+    
+    const categoryData = { name: name };
+
+    try {
+        const response = await fetch(`/api/categories/${categoryId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(categoryData)
+        });
+
+        if (response.ok) {
+            showToast('Success', 'Category updated successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editCategoryModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to update category', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating category:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+// Edit Language Modal Functions
+async function openEditLanguageModal(languageId) {
+    try {
+        const response = await fetch(`/api/languages/${languageId}`);
+        if (response.ok) {
+            const language = await response.json();
+            
+            document.getElementById('editLanguageName').value = language.name || '';
+            
+            document.getElementById('saveEditLanguageBtn').setAttribute('data-language-id', languageId);
+            
+            const modal = new bootstrap.Modal(document.getElementById('editLanguageModal'));
+            modal.show();
+        } else {
+            showToast('Error', 'Failed to load language data', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading language data:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+async function saveEditLanguage() {
+    const saveBtn = document.getElementById('saveEditLanguageBtn');
+    const languageId = saveBtn.getAttribute('data-language-id');
+    
+    const name = document.getElementById('editLanguageName').value.trim();
+    if (!name) {
+        showToast('Error', 'Language name is required', 'error');
+        return;
+    }
+    
+    const languageData = { name: name };
+
+    try {
+        const response = await fetch(`/api/languages/${languageId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(languageData)
+        });
+
+        if (response.ok) {
+            showToast('Success', 'Language updated successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editLanguageModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to update language', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating language:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+// Edit User Modal Functions
+async function openEditUserModal(userId) {
+    try {
+        const response = await fetch(`/api/users/${userId}`);
+        if (response.ok) {
+            const user = await response.json();
+            
+            document.getElementById('editUserName').value = user.username || '';
+            document.getElementById('editUserEmail').value = user.email || '';
+            document.getElementById('editUserPassword').value = '';
+            document.getElementById('editUserPasswordConfirm').value = '';
+            // Populate role select if present
+            if (document.getElementById('editUserRole')) {
+                document.getElementById('editUserRole').value = user.role || 'user';
+            }
+            
+            document.getElementById('saveEditUserBtn').setAttribute('data-user-id', userId);
+            
+            const modal = new bootstrap.Modal(document.getElementById('editUserModal'));
+            modal.show();
+        } else {
+            showToast('Error', 'Failed to load user data', 'error');
+        }
+    } catch (error) {
+        console.error('Error loading user data:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+async function saveEditUser() {
+    const saveBtn = document.getElementById('saveEditUserBtn');
+    const userId = saveBtn.getAttribute('data-user-id');
+    
+    const username = document.getElementById('editUserName').value.trim();
+    const email = document.getElementById('editUserEmail').value.trim();
+    const password = document.getElementById('editUserPassword').value;
+    const passwordConfirm = document.getElementById('editUserPasswordConfirm').value;
+    const role = document.getElementById('editUserRole') ? document.getElementById('editUserRole').value : null;
+    
+    if (!username || !email) {
+        showToast('Error', 'Username and email are required', 'error');
+        return;
+    }
+
+    if (!email.includes('@')) {
+        showToast('Error', 'Please enter a valid email address', 'error');
+        return;
+    }
+
+    const userData = {
+        username: username,
+        email: email
+    };
+
+    if (role) {
+        userData.role = role;
+    }
+
+    // Only update password if a new one is provided
+    if (password) {
+        if (password.length < 6) {
+            showToast('Error', 'Password must be at least 6 characters long', 'error');
+            return;
+        }
+        if (password !== passwordConfirm) {
+            showToast('Error', 'Passwords do not match', 'error');
+            return;
+        }
+        userData.password = password;
+    }
+
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(userData)
+        });
+
+        if (response.ok) {
+            showToast('Success', 'User updated successfully', 'success');
+            bootstrap.Modal.getInstance(document.getElementById('editUserModal')).hide();
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to update user', 'error');
+        }
+    } catch (error) {
+        console.error('Error updating user:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+// Show toast notification
+function showToast(title, message, type = 'info') {
+    const toast = document.getElementById('alertToast');
+    const toastTitle = document.getElementById('toastTitle');
+    const toastMessage = document.getElementById('toastMessage');
+    
+    toastTitle.textContent = title;
+    toastMessage.textContent = message;
+    
+    // Set toast color based on type
+    toast.className = 'toast';
+    if (type === 'success') {
+        toast.classList.add('text-bg-success');
+    } else if (type === 'error') {
+        toast.classList.add('text-bg-danger');
+    } else {
+        toast.classList.add('text-bg-info');
+    }
+    
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+}
+
+// Allow enter key to trigger search
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchTitle');
+    if (searchInput) {
+        searchInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                searchOpenLibrary();
+            }
+        });
+    }
+    
+    // Load dropdown options on page load
+    loadDropdownOptions();
+    
+    // Reset add book modal when it's opened
+    const addBookModal = document.getElementById('addBookModal');
+    if (addBookModal) {
+        addBookModal.addEventListener('show.bs.modal', async function(event) {
+            // Load dropdown options and reset form
+            await loadDropdownOptions();
+            resetBookModal();
+        });
+        
+        // Reset when modal is hidden
+        addBookModal.addEventListener('hidden.bs.modal', function() {
+            resetBookModal();
+        });
+    }
+});
+
+// Delete Functions
+async function deleteBook(bookId, bookTitle) {
+    if (!confirm(`Are you sure you want to delete "${bookTitle}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/books/${bookId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            showToast('Success', 'Book deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to delete book', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting book:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+async function deleteAuthor(authorId, authorName) {
+    if (!confirm(`Are you sure you want to delete author "${authorName}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/authors/delete/${authorId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            showToast('Success', 'Author deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to delete author', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting author:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+async function deleteCategory(categoryId, categoryName) {
+    if (!confirm(`Are you sure you want to delete category "${categoryName}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/categories/${categoryId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            showToast('Success', 'Category deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to delete category', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting category:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+async function deleteLanguage(languageId, languageName) {
+    if (!confirm(`Are you sure you want to delete language "${languageName}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/languages/${languageId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            showToast('Success', 'Language deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to delete language', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting language:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+async function deleteUser(userId, username) {
+    if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/users/${userId}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (response.ok) {
+            showToast('Success', 'User deleted successfully', 'success');
+            setTimeout(() => location.reload(), 1000);
+        } else {
+            const data = await response.json();
+            showToast('Error', data.error || 'Failed to delete user', 'error');
+        }
+    } catch (error) {
+        console.error('Error deleting user:', error);
+        showToast('Error', 'Network error occurred', 'error');
+    }
+}
+
+// Search and Filter Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    // Books search and filter
+    const booksSearch = document.getElementById('booksSearch');
+    const booksFilter = document.getElementById('booksFilter');
+    const booksSortBy = document.getElementById('booksSortBy');
+    const booksOrder = document.getElementById('booksOrder');
+    const booksPerPage = document.getElementById('booksPerPage');
+    
+    if (booksSearch) {
+        booksSearch.addEventListener('input', debounce(filterBooksTable, 300));
+    }
+    if (booksFilter) {
+        booksFilter.addEventListener('change', filterBooksTable);
+    }
+    if (booksSortBy) {
+        booksSortBy.addEventListener('change', sortBooksTable);
+    }
+    if (booksOrder) {
+        booksOrder.addEventListener('change', sortBooksTable);
+    }
+    if (booksPerPage) {
+        booksPerPage.addEventListener('change', updateBooksPerPage);
+    }
+    
+    // Authors search and filter
+    const authorsSearch = document.getElementById('authorsSearch');
+    const authorsSortBy = document.getElementById('authorsSortBy');
+    const authorsOrder = document.getElementById('authorsOrder');
+    const authorsPerPage = document.getElementById('authorsPerPage');
+    
+    if (authorsSearch) {
+        authorsSearch.addEventListener('input', debounce(filterAuthorsTable, 300));
+    }
+    if (authorsSortBy) {
+        authorsSortBy.addEventListener('change', sortAuthorsTable);
+    }
+    if (authorsOrder) {
+        authorsOrder.addEventListener('change', sortAuthorsTable);
+    }
+    if (authorsPerPage) {
+        authorsPerPage.addEventListener('change', updateAuthorsPerPage);
+    }
+});
+
+// Debounce function to limit API calls
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// Books filtering and search
+function filterBooksTable() {
+    const searchTerm = document.getElementById('booksSearch').value.toLowerCase();
+    const filterValue = document.getElementById('booksFilter').value;
+    const tableRows = document.querySelectorAll('#books tbody tr');
+    
+    tableRows.forEach(row => {
+        const title = row.cells[0].textContent.toLowerCase();
+        const authors = row.cells[1].textContent.toLowerCase();
+        const categories = row.cells[3].textContent.toLowerCase();
+        const year = row.cells[2].textContent;
+        
+        const matchesSearch = title.includes(searchTerm) || 
+                            authors.includes(searchTerm) || 
+                            categories.includes(searchTerm) ||
+                            year.includes(searchTerm);
+        
+        let matchesFilter = true;
+        if (filterValue === 'no_cover') {
+            // Check if the row has a cover (you might need to adjust this logic)
+            matchesFilter = !row.querySelector('img[src*="covers.openlibrary.org"]');
+        } else if (filterValue === 'with_cover') {
+            matchesFilter = !!row.querySelector('img[src*="covers.openlibrary.org"]');
+        }
+        
+        row.style.display = (matchesSearch && matchesFilter) ? '' : 'none';
+    });
+    
+    // Reset pagination to page 1 when filter changes
+    currentBooksPage = 1;
+    paginateBooks();
+    updateBooksCount();
+}
+
+// Books sorting
+function sortBooksTable() {
+    const sortBy = document.getElementById('booksSortBy').value;
+    const order = document.getElementById('booksOrder').value;
+    const tbody = document.querySelector('#books tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    console.log(`Sorting books by ${sortBy} in ${order} order, found ${rows.length} rows`);
+    
+    rows.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch(sortBy) {
+            case 'title':
+                aValue = a.cells[1].textContent.trim();
+                bValue = b.cells[1].textContent.trim();
+                break;
+            case 'publication_year':
+                aValue = parseInt(a.cells[3].textContent.trim()) || 0;
+                bValue = parseInt(b.cells[3].textContent.trim()) || 0;
+                break;
+            case 'id':
+                aValue = parseInt(a.dataset.id) || 0;
+                bValue = parseInt(b.dataset.id) || 0;
+                break;
+            default:
+                return 0;
+        }
+        
+        if (typeof aValue === 'string') {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+        }
+        
+        // Handle null/undefined values
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return order === 'desc' ? 1 : -1;
+        if (bValue == null) return order === 'desc' ? -1 : 1;
+        
+        if (order === 'desc') {
+            return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+        } else {
+            return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+        }
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Maintain current page after sorting
+    paginateBooks();
+}
+
+// Authors filtering and search
+function filterAuthorsTable() {
+    const searchTerm = document.getElementById('authorsSearch').value.toLowerCase();
+    const tableRows = document.querySelectorAll('#authors tbody tr');
+    
+    tableRows.forEach(row => {
+        const name = row.cells[0].textContent.toLowerCase();
+        const bookCount = row.cells[1].textContent.toLowerCase();
+        
+        const matchesSearch = name.includes(searchTerm) || 
+                            bookCount.includes(searchTerm);
+        
+        row.style.display = matchesSearch ? '' : 'none';
+    });
+    
+    // Reset pagination to page 1 when filter changes
+    currentAuthorsPage = 1;
+    paginateAuthors();
+    updateAuthorsCount();
+}
+
+// Authors sorting
+function sortAuthorsTable() {
+    const sortBy = document.getElementById('authorsSortBy').value;
+    const order = document.getElementById('authorsOrder').value;
+    const tbody = document.querySelector('#authors tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    
+    console.log(`Sorting authors by ${sortBy} in ${order} order, found ${rows.length} rows`);
+    
+    rows.sort((a, b) => {
+        let aValue, bValue;
+        
+        switch(sortBy) {
+            case 'name':
+                aValue = a.cells[1].textContent.trim();
+                bValue = b.cells[1].textContent.trim();
+                break;
+            case 'book_count':
+                aValue = parseInt(a.cells[2].textContent.trim()) || 0;
+                bValue = parseInt(b.cells[2].textContent.trim()) || 0;
+                break;
+            case 'id':
+                aValue = parseInt(a.dataset.id) || 0;
+                bValue = parseInt(b.dataset.id) || 0;
+                break;
+            default:
+                return 0;
+        }
+        
+        if (typeof aValue === 'string') {
+            aValue = aValue.toLowerCase();
+            bValue = bValue.toLowerCase();
+        }
+        
+        // Handle null/undefined values
+        if (aValue == null && bValue == null) return 0;
+        if (aValue == null) return order === 'desc' ? 1 : -1;
+        if (bValue == null) return order === 'desc' ? -1 : 1;
+        
+        if (order === 'desc') {
+            return aValue < bValue ? 1 : aValue > bValue ? -1 : 0;
+        } else {
+            return aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+        }
+    });
+    
+    rows.forEach(row => tbody.appendChild(row));
+    
+    // Maintain current page after sorting
+    paginateAuthors();
+}
+
+// Pagination functions
+let currentBooksPage = 1;
+let booksPerPageValue = 25;
+
+function updateBooksPerPage() {
+    booksPerPageValue = parseInt(document.getElementById('booksPerPage').value);
+    currentBooksPage = 1;
+    paginateBooks();
+}
+
+function paginateBooks() {
+    const tableRows = document.querySelectorAll('#books tbody tr');
+    
+    // Get all rows that should be visible based on current filters
+    const filteredRows = Array.from(tableRows).filter(row => {
+        // Check if row matches current search criteria
+        const searchTerm = document.getElementById('booksSearch')?.value?.toLowerCase() || '';
+        
+        if (searchTerm) {
+            const cells = row.querySelectorAll('td');
+            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+            if (!rowText.includes(searchTerm)) return false;
+        }
+        
+        return true;
+    });
+    
+    const totalPages = Math.ceil(filteredRows.length / booksPerPageValue);
+    
+    // Hide all table rows first
+    tableRows.forEach(row => row.style.display = 'none');
+    
+    // Show only the rows for current page from filtered results
+    const startIndex = (currentBooksPage - 1) * booksPerPageValue;
+    const endIndex = startIndex + booksPerPageValue;
+    
+    for (let i = startIndex; i < endIndex && i < filteredRows.length; i++) {
+        filteredRows[i].style.display = '';
+    }
+    
+    updateBooksPagination(totalPages);
+    updateBooksCount();
+}
+
+function updateBooksPagination(totalPages) {
+    const pagination = document.getElementById('booksPagination');
+    if (!pagination) return;
+    
+    pagination.innerHTML = '';
+    
+    // Previous button
+    const prevBtn = document.createElement('li');
+    prevBtn.className = `page-item ${currentBooksPage === 1 ? 'disabled' : ''}`;
+    prevBtn.innerHTML = `<a class="page-link" href="#" onclick="changeBooksPage(${currentBooksPage - 1})">Previous</a>`;
+    pagination.appendChild(prevBtn);
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentBooksPage - 2 && i <= currentBooksPage + 2)) {
+            const pageBtn = document.createElement('li');
+            pageBtn.className = `page-item ${i === currentBooksPage ? 'active' : ''}`;
+            pageBtn.innerHTML = `<a class="page-link" href="#" onclick="changeBooksPage(${i})">${i}</a>`;
+            pagination.appendChild(pageBtn);
+        } else if (i === currentBooksPage - 3 || i === currentBooksPage + 3) {
+            const dots = document.createElement('li');
+            dots.className = 'page-item disabled';
+            dots.innerHTML = '<span class="page-link">...</span>';
+            pagination.appendChild(dots);
+        }
+    }
+    
+    // Next button
+    const nextBtn = document.createElement('li');
+    nextBtn.className = `page-item ${currentBooksPage === totalPages ? 'disabled' : ''}`;
+    nextBtn.innerHTML = `<a class="page-link" href="#" onclick="changeBooksPage(${currentBooksPage + 1})">Next</a>`;
+    pagination.appendChild(nextBtn);
+}
+
+function changeBooksPage(page) {
+    // Recalculate total pages based on currently filtered rows
+    const tableRows = document.querySelectorAll('#books tbody tr');
+    const searchTerm = document.getElementById('booksSearch')?.value?.toLowerCase() || '';
+    const categoryFilter = document.getElementById('booksCategoryFilter')?.value || '';
+    const languageFilter = document.getElementById('booksLanguageFilter')?.value || '';
+    
+    const filteredRows = Array.from(tableRows).filter(row => {
+        if (searchTerm) {
+            const cells = row.querySelectorAll('td');
+            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+            if (!rowText.includes(searchTerm)) return false;
+        }
+        
+        if (categoryFilter) {
+            const categoryCell = row.querySelector('td:nth-child(4)');
+            if (categoryCell && !categoryCell.textContent.toLowerCase().includes(categoryFilter.toLowerCase())) {
+                return false;
+            }
+        }
+        
+        if (languageFilter) {
+            const languageCell = row.querySelector('td:nth-child(5)');
+            if (languageCell && !languageCell.textContent.toLowerCase().includes(languageFilter.toLowerCase())) {
+                return false;
+            }
+        }
+        
+        return true;
+    });
+    
+    const totalPages = Math.ceil(filteredRows.length / booksPerPageValue);
+    
+    if (page >= 1 && page <= totalPages) {
+        currentBooksPage = page;
+        paginateBooks();
+    }
+}
+
+// Similar functions for other entity types (authors, categories, etc.)
+let currentAuthorsPage = 1;
+let authorsPerPageValue = 25;
+
+function updateAuthorsPerPage() {
+    authorsPerPageValue = parseInt(document.getElementById('authorsPerPage').value);
+    currentAuthorsPage = 1;
+    paginateAuthors();
+}
+
+function paginateAuthors() {
+    const tableRows = document.querySelectorAll('#authors tbody tr');
+    
+    // Get all rows that should be visible based on current filters
+    const filteredRows = Array.from(tableRows).filter(row => {
+        // Check if row matches current search criteria
+        const searchTerm = document.getElementById('authorsSearch')?.value?.toLowerCase() || '';
+        const sortBy = document.getElementById('authorsSortBy')?.value || '';
+        
+        if (searchTerm) {
+            const cells = row.querySelectorAll('td');
+            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+            if (!rowText.includes(searchTerm)) return false;
+        }
+        
+        return true;
+    });
+    
+    const totalPages = Math.ceil(filteredRows.length / authorsPerPageValue);
+    
+    // Hide all table rows first
+    tableRows.forEach(row => row.style.display = 'none');
+    
+    // Show only the rows for current page from filtered results
+    const startIndex = (currentAuthorsPage - 1) * authorsPerPageValue;
+    const endIndex = startIndex + authorsPerPageValue;
+    
+    for (let i = startIndex; i < endIndex && i < filteredRows.length; i++) {
+        filteredRows[i].style.display = '';
+    }
+    
+    updateAuthorsPagination(totalPages);
+    updateAuthorsCount();
+}
+
+function updateAuthorsPagination(totalPages) {
+    const pagination = document.getElementById('authorsPagination');
+    if (!pagination) return;
+    
+    pagination.innerHTML = '';
+    
+    // Previous button
+    const prevBtn = document.createElement('li');
+    prevBtn.className = `page-item ${currentAuthorsPage === 1 ? 'disabled' : ''}`;
+    prevBtn.innerHTML = `<a class="page-link" href="#" onclick="changeAuthorsPage(${currentAuthorsPage - 1})">Previous</a>`;
+    pagination.appendChild(prevBtn);
+    
+    // Page numbers
+    for (let i = 1; i <= totalPages; i++) {
+        if (i === 1 || i === totalPages || (i >= currentAuthorsPage - 2 && i <= currentAuthorsPage + 2)) {
+            const pageBtn = document.createElement('li');
+            pageBtn.className = `page-item ${i === currentAuthorsPage ? 'active' : ''}`;
+            pageBtn.innerHTML = `<a class="page-link" href="#" onclick="changeAuthorsPage(${i})">${i}</a>`;
+            pagination.appendChild(pageBtn);
+        }
+    }
+    
+    // Next button
+    const nextBtn = document.createElement('li');
+    nextBtn.className = `page-item ${currentAuthorsPage === totalPages ? 'disabled' : ''}`;
+    nextBtn.innerHTML = `<a class="page-link" href="#" onclick="changeAuthorsPage(${currentAuthorsPage + 1})">Next</a>`;
+    pagination.appendChild(nextBtn);
+}
+
+function changeAuthorsPage(page) {
+    // Recalculate total pages based on currently filtered rows
+    const tableRows = document.querySelectorAll('#authors tbody tr');
+    const searchTerm = document.getElementById('authorsSearch')?.value?.toLowerCase() || '';
+    
+    const filteredRows = Array.from(tableRows).filter(row => {
+        if (searchTerm) {
+            const cells = row.querySelectorAll('td');
+            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+            if (!rowText.includes(searchTerm)) return false;
+        }
+        
+        return true;
+    });
+    
+    const totalPages = Math.ceil(filteredRows.length / authorsPerPageValue);
+    
+    if (page >= 1 && page <= totalPages) {
+        currentAuthorsPage = page;
+        paginateAuthors();
+    }
+}
+
+// Update count functions
+function updateBooksCount() {
+    const tableRows = document.querySelectorAll('#books tbody tr');
+    const visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+    
+    // Calculate filtered count based on current search/filter criteria
+    const searchTerm = document.getElementById('booksSearch')?.value?.toLowerCase() || '';
+    const categoryFilter = document.getElementById('booksCategoryFilter')?.value || '';
+    const languageFilter = document.getElementById('booksLanguageFilter')?.value || '';
+    
+    const filteredCount = Array.from(tableRows).filter(row => {
+        if (searchTerm) {
+            const cells = row.querySelectorAll('td');
+            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+            if (!rowText.includes(searchTerm)) return false;
+        }
+        
+        if (categoryFilter) {
+            const categoryCell = row.querySelector('td:nth-child(4)');
+            if (categoryCell && !categoryCell.textContent.toLowerCase().includes(categoryFilter.toLowerCase())) {
+                return false;
+            }
+        }
+        
+        if (languageFilter) {
+            const languageCell = row.querySelector('td:nth-child(5)');
+            if (languageCell && !languageCell.textContent.toLowerCase().includes(languageFilter.toLowerCase())) {
+                return false;
+            }
+        }
+        
+        return true;
+    }).length;
+    
+}
+
+function updateAuthorsCount() {
+    const tableRows = document.querySelectorAll('#authors tbody tr');
+    const visibleRows = Array.from(tableRows).filter(row => row.style.display !== 'none');
+    
+    // Calculate filtered count based on current search criteria
+    const searchTerm = document.getElementById('authorsSearch')?.value?.toLowerCase() || '';
+    
+    const filteredCount = Array.from(tableRows).filter(row => {
+        if (searchTerm) {
+            const cells = row.querySelectorAll('td');
+            const rowText = Array.from(cells).map(cell => cell.textContent.toLowerCase()).join(' ');
+            if (!rowText.includes(searchTerm)) return false;
+        }
+        
+        return true;
+    }).length;
+    
+}
+
+// Initialize pagination when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        paginateBooks();
+        paginateAuthors();
+    }, 500);
+});
+</script>
+
+{% endblock %}

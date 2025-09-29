@@ -1,0 +1,307 @@
+<style>
+    .collection-description {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-left: 4px solid #667eea;
+        padding: 0.75rem 1rem;
+        border-radius: 0 12px 12px 0;
+        margin: 0.5rem 0;
+        font-style: italic;
+        color: #495057;
+    }
+</style>
+
+<div class="row">
+    <div class="col-12">
+        <h5 class="mb-3">
+            <i class="fas fa-folder"></i> {{ collection.name }}
+            <small class="text-muted">by {{ collection.username }}</small>
+        </h5>
+        {% if collection.description %}
+        <div class="collection-description mb-3">
+            <i class="fas fa-info-circle me-2"></i>{{ collection.description }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Current Books in Collection -->
+<div class="row mb-4">
+    <div class="col-12">
+        <h6 class="border-bottom pb-2">
+            <i class="fas fa-book text-primary"></i> 
+            Books in Collection ({{ collection_books|length }})
+        </h6>
+        
+        {% if collection_books %}
+        <div class="row">
+            {% for book in collection_books %}
+            <div class="col-md-6 col-lg-4 mb-3">
+                <div class="card border-0 shadow-sm h-100">
+                    <!-- Book Cover -->
+                    <div class="card-img-top d-flex justify-content-center align-items-center bg-light" style="height: 200px;">
+                        {% if book.cover_id %}
+                            <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-M.jpg" 
+                                 alt="{{ book.title }}" 
+                                 class="img-fluid" 
+                                 style="max-height: 180px; max-width: 120px; object-fit: cover;">
+                        {% else %}
+                            <div class="text-center text-muted">
+                                <i class="fas fa-book" style="font-size: 3rem; opacity: 0.3;"></i>
+                                <br><small>No Cover</small>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div class="card-body p-3">
+                        <h6 class="card-title text-primary mb-1" title="{{ book.title }}">{{ book.title|truncate(40) }}</h6>
+                        <p class="card-text">
+                            <small class="text-muted">
+                                {% if book.authors %}
+                                    <i class="fas fa-user"></i> {{ book.authors|join(', ')|truncate(30) }}
+                                {% endif %}
+                                {% if book.publication_year %}
+                                    <br><i class="fas fa-calendar"></i> {{ book.publication_year }}
+                                {% endif %}
+                            </small>
+                        </p>
+                        <button class="btn btn-outline-danger btn-sm w-100" 
+                                onclick="removeBookFromCollection({{ collection.id }}, {{ book.id }})">
+                            <i class="fas fa-minus"></i> Remove from Collection
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4">
+            <i class="fas fa-book-open text-muted" style="font-size: 3rem; opacity: 0.3;"></i>
+            <p class="text-muted mt-2">No books in this collection yet</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add Books to Collection -->
+<div class="row">
+    <div class="col-12">
+        <h6 class="border-bottom pb-2">
+            <i class="fas fa-plus text-success"></i> 
+            Add Books to Collection
+        </h6>
+        
+        <!-- Search for books -->
+        <div class="mb-3">
+            <label for="bookSearch" class="form-label fw-bold">
+                <i class="fas fa-search"></i> Search Books to Add
+            </label>
+            <div class="input-group">
+                <input type="text" 
+                       class="form-control" 
+                       id="bookSearch" 
+                       placeholder="Search by title, author, or keyword..."
+                       onkeyup="searchBooks()"
+                       onkeypress="if(event.key==='Enter') searchBooks()">
+                <button class="btn btn-primary" type="button" onclick="searchBooks()">
+                    <i class="fas fa-search"></i> Search
+                </button>
+            </div>
+            <div class="form-text">Start typing to search for books, or press Enter/click Search</div>
+        </div>
+        
+        <!-- Available Books -->
+        <div id="availableBooks">
+            {% if available_books %}
+            <div class="row">
+                {% for book in available_books %}
+                <div class="col-md-6 col-lg-4 mb-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <!-- Book Cover -->
+                        <div class="card-img-top d-flex justify-content-center align-items-center bg-light" style="height: 200px;">
+                            {% if book.cover_id %}
+                                <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-M.jpg" 
+                                     alt="{{ book.title }}" 
+                                     class="img-fluid" 
+                                     style="max-height: 180px; max-width: 120px; object-fit: cover;">
+                            {% else %}
+                                <div class="text-center text-muted">
+                                    <i class="fas fa-book" style="font-size: 3rem; opacity: 0.3;"></i>
+                                    <br><small>No Cover</small>
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="card-body p-3">
+                            <h6 class="card-title mb-1" title="{{ book.title }}">{{ book.title|truncate(40) }}</h6>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    {% if book.authors %}
+                                        <i class="fas fa-user"></i> {{ book.authors|join(', ')|truncate(30) }}
+                                    {% endif %}
+                                    {% if book.publication_year %}
+                                        <br><i class="fas fa-calendar"></i> {{ book.publication_year }}
+                                    {% endif %}
+                                </small>
+                            </p>
+                            <button class="btn btn-success btn-sm w-100" 
+                                    onclick="addBookToCollection({{ collection.id }}, {{ book.id }})">
+                                <i class="fas fa-plus"></i> Add to Collection
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="text-center py-4">
+                <i class="fas fa-check-circle text-success" style="font-size: 3rem; opacity: 0.3;"></i>
+                <p class="text-muted mt-2">All available books are already in collections</p>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Load More Button -->
+        {% if available_books|length == 20 %}
+        <div class="text-center mt-3">
+            <button class="btn btn-outline-primary" onclick="loadMoreBooks(event)">
+                <i class="fas fa-plus"></i> Load More Books
+            </button>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function addBookToCollection(collectionId, bookId) {
+    fetch(`/collections/${collectionId}/books/add`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ book_id: bookId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            // Refresh the manage books content
+            manageBooks(collectionId);
+        } else {
+            alert('Error adding book: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding book to collection');
+    });
+}
+
+function removeBookFromCollection(collectionId, bookId) {
+    if (confirm('Remove this book from the collection?')) {
+        fetch(`/collections/${collectionId}/books/remove`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ book_id: bookId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Refresh the manage books content
+                manageBooks(collectionId);
+            } else {
+                alert('Error removing book: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error removing book from collection');
+        });
+    }
+}
+
+function searchBooks() {
+    const query = document.getElementById('bookSearch').value.trim();
+    const availableBooksDiv = document.getElementById('availableBooks');
+    
+    if (query.length < 2) {
+        // If search is too short, show message
+        availableBooksDiv.innerHTML = `
+            <div class="alert alert-info">
+                <i class="fas fa-info-circle"></i> 
+                Please enter at least 2 characters to search for books
+            </div>
+        `;
+        return;
+    }
+    
+    // Show loading state
+    availableBooksDiv.innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Searching...</span>
+            </div>
+            <p class="mt-3 text-muted">Searching for "${query}"...</p>
+        </div>
+    `;
+    
+    // Get collection ID from the current context
+    const collectionId = {{ collection.id }};
+    
+    // Perform search
+    fetch(`/collections/${collectionId}/books/search?q=${encodeURIComponent(query)}`)
+        .then(response => response.text())
+        .then(html => {
+            availableBooksDiv.innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Search error:', error);
+            availableBooksDiv.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    Error searching books. Please try again.
+                </div>
+            `;
+        });
+}
+
+function loadMoreBooks(event) {
+    const collectionId = {{ collection.id }};
+    const currentBooks = document.querySelectorAll('#availableBooks .col-md-6').length;
+    
+    // Show loading indicator
+    const loadMoreBtn = event.target;
+    const originalText = loadMoreBtn.innerHTML;
+    loadMoreBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+    loadMoreBtn.disabled = true;
+    
+    fetch(`/collections/${collectionId}/books/more?offset=${currentBooks}`)
+        .then(response => response.text())
+        .then(html => {
+            const availableBooksDiv = document.getElementById('availableBooks');
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            // Append new books
+            const newBooks = tempDiv.querySelector('.row');
+            if (newBooks && newBooks.children.length > 0) {
+                const existingRow = availableBooksDiv.querySelector('.row');
+                if (existingRow) {
+                    existingRow.appendChild(...newBooks.children);
+                }
+                
+                // Restore button
+                loadMoreBtn.innerHTML = originalText;
+                loadMoreBtn.disabled = false;
+            } else {
+                // No more books
+                loadMoreBtn.innerHTML = '<i class="fas fa-check"></i> All books loaded';
+                loadMoreBtn.disabled = true;
+            }
+        })
+        .catch(error => {
+            console.error('Load more error:', error);
+            loadMoreBtn.innerHTML = originalText;
+            loadMoreBtn.disabled = false;
+            alert('Error loading more books');
+        });
+}
+</script>

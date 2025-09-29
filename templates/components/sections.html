@@ -1,0 +1,113 @@
+<!-- Hero Section Component -->
+{% macro hero_section(featured_books=None) %}
+<section id="billboard">
+    <div class="container">
+        <div class="row">
+            <div class="col-md-12">
+                <button class="prev slick-arrow">
+                    <i class="icon icon-arrow-left"></i>
+                </button>
+
+                <div class="main-slider pattern-overlay">
+                    {% if featured_books and featured_books|length > 0 %}
+                        {% for book in featured_books[:2] %}
+                        <div class="slider-item">
+                            <div class="banner-content">
+                                <h2 class="banner-title">{{ book.title }}</h2>
+                                <p>
+                                    {% if book.authors and book.authors|length > 0 %}
+                                        By {{ book.authors[0] }} • 
+                                    {% endif %}
+                                    {% if book.categories and book.categories|length > 0 %}
+                                        {{ book.categories[0] }} • 
+                                    {% endif %}
+                                    {% if book.publication_year %}
+                                        {{ book.publication_year }}
+                                    {% endif %}
+                                </p>
+                                <div class="btn-wrap">
+                                    <a href="/book/{{ book.id }}" class="btn btn-outline-accent btn-accent-arrow">
+                                        Read More<i class="icon icon-ns-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div><!--banner-content-->
+                            {% if book.cover_id %}
+                                <img src="https://covers.openlibrary.org/b/id/{{ book.cover_id }}-L.jpg" 
+                                     alt="{{ book.title }}" class="banner-image">
+                            {% else %}
+                                <img src="{{ url_for('static', filename='images/default.png') }}" 
+                                     alt="{{ book.title }}" class="banner-image">
+                            {% endif %}
+                        </div><!--slider-item-->
+                        {% endfor %}
+                    {% else %}
+                        <!-- Default banners -->
+                        <div class="slider-item">
+                            <div class="banner-content">
+                                <h2 class="banner-title">Discover Amazing Books</h2>
+                                <p>Explore our vast collection of books across all genres. Find your next favorite read and manage your personal library with ease.</p>
+                                <div class="btn-wrap">
+                                    <a href="#featured-books" class="btn btn-outline-accent btn-accent-arrow">
+                                        Browse Books<i class="icon icon-ns-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div><!--banner-content-->
+                            <img src="{{ url_for('static', filename='images/main-banner1.jpg') }}" alt="banner" class="banner-image">
+                        </div><!--slider-item-->
+
+                        <div class="slider-item">
+                            <div class="banner-content">
+                                <h2 class="banner-title">Build Your Library</h2>
+                                <p>Organize your books into collections, track your reading progress, and discover new authors. Your personal library awaits.</p>
+                                <div class="btn-wrap">
+                                    <a href="#popular-books" class="btn btn-outline-accent btn-accent-arrow">
+                                        Start Building<i class="icon icon-ns-arrow-right"></i>
+                                    </a>
+                                </div>
+                            </div><!--banner-content-->
+                            <img src="{{ url_for('static', filename='images/main-banner2.jpg') }}" alt="banner" class="banner-image">
+                        </div><!--slider-item-->
+                    {% endif %}
+                </div><!--slider-->
+
+                <button class="next slick-arrow">
+                    <i class="icon icon-arrow-right"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+{% endmacro %}
+
+<!-- Section Header Component -->
+{% macro section_header(title, subtitle=None, alignment="align-center") %}
+<div class="section-header {{ alignment }}">
+    {% if subtitle %}
+    <div class="title">
+        <span>{{ subtitle }}</span>
+    </div>
+    {% endif %}
+    <h2 class="section-title">{{ title }}</h2>
+</div>
+{% endmacro %}
+
+<!-- Client Logos Section -->
+{% macro client_section() %}
+<section id="client-holder" data-aos="fade-up">
+    <div class="container">
+        <div class="row">
+            <div class="inner-content">
+                <div class="logo-wrap">
+                    <div class="grid">
+                        <a href="#"><img src="{{ url_for('static', filename='images/client-image1.png') }}" alt="partner"></a>
+                        <a href="#"><img src="{{ url_for('static', filename='images/client-image2.png') }}" alt="partner"></a>
+                        <a href="#"><img src="{{ url_for('static', filename='images/client-image3.png') }}" alt="partner"></a>
+                        <a href="#"><img src="{{ url_for('static', filename='images/client-image4.png') }}" alt="partner"></a>
+                        <a href="#"><img src="{{ url_for('static', filename='images/client-image5.png') }}" alt="partner"></a>
+                    </div>
+                </div><!--image-holder-->
+            </div>
+        </div>
+    </div>
+</section>
+{% endmacro %}

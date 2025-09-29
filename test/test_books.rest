@@ -1,0 +1,51 @@
+@url=http://localhost:5000/api
+
+### Test Case: Get all books
+GET {{url}}/collections/
+
+### get books by id
+GET {{url}}/books/13
+
+### get book by title
+GET {{url}}/books/title/great gatsby
+
+### post a new book
+POST {{url}}/books
+Content-Type: application/json
+
+{
+    "title": "A Song of Ids",
+    "author": "George R. R. Martin",
+    "categories": ["Fantasy", "Adventure"],
+    "languages": ["eng", "fre"],
+    "publication_year": 1996,
+    "cover_id": 123456,
+    "open_library_id": "OL12322278M"
+}
+
+### delete a book by id
+DELETE {{url}}/books/12
+
+
+### update a book by id
+PUT {{url}}/books/13
+Content-Type: application/json
+
+{
+   "title": "A Song of Ice and Fire",
+    "author": "George R. R. Martin",
+    "categories": ["Fantasy", "Adventure", "Drama"],
+    "languages": ["eng", "fre", "deu" ,"bob", "jpn"],
+    "publication_year": 1996,
+    "cover_id": 123456,
+    "open_library_id": "OL12342278M"
+}
+
+
+### update user 3 to admin
+PUT {{url}}/users/3
+Content-Type: application/json
+
+{
+    "role": "admin"
+}

@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Profile - Books Manager{% endblock %}
+
+{% block content %}
+<main class="main-wrapper">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-8 col-lg-6">
+                <div class="card shadow">
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <h2 class="h3 mb-2">My Profile</h2>
+                            <p class="text-muted">Manage your account information</p>
+                        </div>
+                        
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h5><i class="icon icon-user"></i> Account Information</h5>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Username:</label>
+                                    <p class="form-control-plaintext">{{ user.username }}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Email:</label>
+                                    <p class="form-control-plaintext">{{ user.email }}</p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Member Since:</label>
+                                    <p class="form-control-plaintext">
+                                        {{ user.created_at.strftime('%B %d, %Y') if user.created_at else 'Unknown' }}
+                                    </p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Role:</label>
+                                    <p class="form-control-plaintext">
+                                        <span class="badge bg-{{ 'warning' if user.role == 'admin' else 'info' }} fs-6">
+                                            {{ user.role.title() }}
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <h5><i class="icon icon-stats"></i> Account Statistics</h5>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Collections Created:</label>
+                                    <p class="form-control-plaintext">
+                                        <span class="badge bg-primary fs-6">{{ user.collection_count or 0 }}</span>
+                                    </p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Total Books in Collections:</label>
+                                    <p class="form-control-plaintext">
+                                        <span class="badge bg-success fs-6">{{ user.total_books_in_collections or 0 }}</span>
+                                    </p>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Account Status:</label>
+                                    <p class="form-control-plaintext">
+                                        <span class="badge bg-success fs-6">Active</span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        {% if user.favorite_categories %}
+                        <div class="row mt-4">
+                            <div class="col-12">
+                                <h5><i class="icon icon-heart"></i> Reading Preferences</h5>
+                                <div class="mb-3">
+                                    <label class="form-label fw-bold">Favorite Categories:</label>
+                                    <p class="form-control-plaintext">
+                                        {{ user.favorite_categories }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <hr>
+                        
+                        <div class="text-center">
+                            <div class="btn-group" role="group">
+                                        <a href="{{ url_for('home') }}" class="btn btn-outline-primary">
+                                    <i class="icon icon-home"></i> Back to Home
+                                </a>
+                                <a href="{{ url_for('auth.logout') }}" class="btn btn-outline-danger">
+                                    <i class="icon icon-sign-out"></i> Logout
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        padding-top: 80px;
+    }
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    .badge {
+        font-size: 0.9rem !important;
+    }
+</style>
+{% endblock %}

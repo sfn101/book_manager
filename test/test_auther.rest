@@ -1,0 +1,39 @@
+@url=http://localhost:5000/api/authors
+
+### Test Case: Get all authors
+GET {{url}}/
+
+### Test Case: Get author by ID
+GET {{url}}/1
+
+### Test Case: Search authors by name
+GET {{url}}/search?name=r. r
+
+### Test Case: update author
+PUT {{url}}/update/20
+Content-Type: application/json
+
+{
+
+    "name": "123"
+}
+
+### Test Case: Create a new author
+POST {{url}}/add
+Content-Type: application/json
+
+{
+    "name": "test"
+}
+
+### Test Case: Delete an author
+DELETE {{url}}/delete/11
+
+### test adding book to author
+POST {{url}}/remove_book
+Content-Type: application/json
+
+{
+    "author_id": 1,
+    "book_id": 4
+}

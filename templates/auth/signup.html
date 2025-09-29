@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}Sign Up - Books Manager{% endblock %}
+
+{% block content %}
+<main class="main-wrapper">
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-4">
+                <div class="card shadow">
+                    <div class="card-body p-4">
+                        <div class="text-center mb-4">
+                            <h2 class="h3 mb-2">Create Account</h2>
+                            <p class="text-muted">Join our community of book lovers!</p>
+                        </div>
+                        
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+                        
+                        <form method="POST" action="{{ url_for('auth.signup') }}">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username</label>
+                                <input type="text" class="form-control" id="username" name="username" required 
+                                       placeholder="Choose a username" value="{{ request.form.username or '' }}">
+                                <div class="form-text">Must be unique</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" required 
+                                       placeholder="Enter your email" value="{{ request.form.email or '' }}">
+                                <div class="form-text">We'll never share your email with anyone else</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" name="password" required 
+                                       placeholder="Create a password" minlength="6">
+                                <div class="form-text">Must be at least 6 characters long</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password_confirm" class="form-label">Confirm Password</label>
+                                <input type="password" class="form-control" id="password_confirm" name="password_confirm" required 
+                                       placeholder="Confirm your password">
+                                <div class="form-text">Must match the password above</div>
+                            </div>
+                            
+                            <div class="d-grid mb-3">
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="icon icon-user-plus"></i> Create Account
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <hr>
+                        
+                        <div class="text-center">
+                            <p class="mb-0">Already have an account? 
+                                <a href="{{ url_for('auth.login') }}" class="text-decoration-none">Login here</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .main-wrapper {
+        min-height: 100vh;
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        display: flex;
+        align-items: center;
+    }
+    .card {
+        border: none;
+        border-radius: 15px;
+    }
+    .btn-primary {
+        border-radius: 25px;
+        padding: 10px 20px;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Client-side password confirmation validation
+    document.addEventListener('DOMContentLoaded', function() {
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('password_confirm');
+        
+        function validatePassword() {
+            if (password.value !== confirmPassword.value) {
+                confirmPassword.setCustomValidity("Passwords don't match");
+            } else {
+                confirmPassword.setCustomValidity('');
+            }
+        }
+        
+        password.addEventListener('change', validatePassword);
+        confirmPassword.addEventListener('keyup', validatePassword);
+    });
+</script>
+{% endblock %}
