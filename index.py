@@ -853,7 +853,7 @@ def add_book_to_collection(collection_id):
                 
                 # Check if book is already in collection
                 cursor.execute("""
-                    SELECT id FROM collection_books 
+                    SELECT 1 FROM collection_books 
                     WHERE collection_id = %s AND book_id = %s
                 """, (collection_id, book_id))
                 
@@ -869,7 +869,7 @@ def add_book_to_collection(collection_id):
         return jsonify({'success': True, 'message': 'Book added to collection'})
         
     except Exception as e:
-        print(f"Add book to collection error: {e}")
+        print(f"Add book to collection error: {e}")  # Log the error for debugging
         return jsonify({'success': False, 'message': 'Server error'})
 
 @app.route('/collections/<int:collection_id>/books/remove', methods=['POST'])

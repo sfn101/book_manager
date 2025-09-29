@@ -439,6 +439,55 @@ function deleteCollection(collectionId) {
     }
 }
 
+// Include addBookToCollection and removeBookFromCollection functions
+function addBookToCollection(collectionId, bookId) {
+    fetch(`/collections/${collectionId}/books/add`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ book_id: bookId })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            manageBooks(collectionId);
+        } else {
+            alert('Error adding book: ' + data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error adding book to collection');
+    });
+}
+
+function removeBookFromCollection(collectionId, bookId) {
+    if (confirm('Remove this book from the collection?')) {
+        fetch(`/collections/${collectionId}/books/remove`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ book_id: bookId })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                manageBooks(collectionId);
+            } else {
+                alert('Error removing book: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error removing book from collection');
+        });
+    }
+}
+
+
+
 // Auto-dismiss alerts after 5 seconds
 document.addEventListener('DOMContentLoaded', function() {
     const alerts = document.querySelectorAll('.alert-dismissible');
@@ -449,5 +498,43 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 5000);
     });
 });
+
+document.addEventListener('DOMContentLoaded', function () {
+    const manageBooksModal = document.getElementById('manageBooksModal');
+    
+    manageBooksModal.addEventListener('shown.bs.modal', function () {
+        // Reinitialize the searchBooks function or any other scripts
+        const script = document.createElement('script');
+        script.textContent = `
+            function searchBooks() {
+                const query = document.getElementById('bookSearch').value.trim();
+                const availableBooksDiv = document.getElementById('availableBooks');
+                
+                if (query.length < 2) {
+                    availableBooksDiv.innerHTML = '<div class="alert alert-info">Please enter at least 2 characters to search for books</div>';
+                    return;
+                }
+                
+                availableBooksDiv.innerHTML = '<div class="spinner-border text-primary"></div>';
+                
+                const collectionId = document.getElementById('collectionId').value;
+                
+                fetch('/collections/' + collectionId + '/books/search?q=' + encodeURIComponent(query))
+                    .then(response => response.text())
+                    .then(html => {
+                        availableBooksDiv.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error('Search error:', error);
+                        availableBooksDiv.innerHTML = '<div class="alert alert-danger">Error searching books</div>';
+                    });
+            }
+        `;
+        document.body.appendChild(script);
+    });
+});
 </script>
+
 {% endblock %}
+
+<!-- Replace deprecated meta tag -->

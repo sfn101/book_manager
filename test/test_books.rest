@@ -1,7 +1,7 @@
 @url=http://localhost:5000/api
 
 ### Test Case: Get all books
-GET {{url}}/books
+GET {{url}}/collections/
 
 ### get books by id
 GET {{url}}/books/13
